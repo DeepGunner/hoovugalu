@@ -1,0 +1,252 @@
+/* Faithful port of inline styles from Huvugalu/huvugalu.html, scoped as a CSS module. */
+
+.main {
+  /* Tokens echo the original :root, scoped to this component */
+  --bg: #F8F5EE;
+  --ink: #100F0C;
+  --muted: #6B6460;
+  --border: #E8E2D8;
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sans: 'DM Sans', system-ui, sans-serif;
+
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  transition: background 600ms ease, color 320ms;
+  position: relative;
+}
+
+.main button { font: inherit; cursor: pointer; }
+
+.brand {
+  padding: 10px 20px 2px;
+  text-align: center;
+  font-size: 9px;
+  letter-spacing: 0.32em;
+  color: var(--muted);
+  position: relative;
+  z-index: 2;
+}
+
+.hero {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.wheelWrap {
+  position: relative;
+  width: min(105vw, calc(100vh - 120px));
+  width: min(105vw, calc(100dvh - 120px));
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  max-width: 1200px;
+  flex-shrink: 0;
+}
+
+.wheelWrap svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  touch-action: manipulation;
+  overflow: visible;
+}
+
+.timeline {
+  width: 100vw;
+  height: calc(100vh - 130px);
+  height: calc(100dvh - 130px);
+  display: grid;
+  gap: 1px;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.timeline > div {
+  transition: opacity 200ms;
+  cursor: pointer;
+  border-radius: 1px;
+}
+
+.bottomNav {
+  position: sticky;
+  bottom: 0;
+  background: rgba(248, 245, 238, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border);
+  padding: 10px 12px 14px;
+  z-index: 20;
+}
+
+.pills {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pills::-webkit-scrollbar { display: none; }
+
+.pill {
+  flex-shrink: 0;
+  padding: 6px 14px 7px;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  white-space: nowrap;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.pill.active {
+  background: var(--ink);
+  color: var(--bg);
+  border-color: var(--ink);
+}
+
+.pillTheme {
+  font-size: 8px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  font-family: var(--sans);
+  margin-bottom: 2px;
+}
+
+.pillName {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 14px;
+}
+
+.navRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 8px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.paletteRow { display: flex; gap: 5px; }
+
+.paletteRow button {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  padding: 0;
+}
+
+.paletteRow button.active { border: 2px solid var(--ink); }
+
+.viewToggle { display: flex; gap: 4px; }
+
+.viewToggle button {
+  width: 30px;
+  height: 26px;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.viewToggle button.active {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.detailOverlay {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 20px 28px;
+  max-width: 420px;
+  width: calc(100% - 40px);
+  text-align: center;
+  pointer-events: none;
+  z-index: 50;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+}
+
+.detailOverlay .swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  margin: 0 auto 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.detailOverlay .common {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.detailOverlay .botanical {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--muted);
+  margin-top: 4px;
+  letter-spacing: 0.08em;
+}
+
+.detailOverlay .meta {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 12px;
+}
+
+.detailOverlay .dynamics {
+  font-size: 13px;
+  line-height: 1.55;
+  margin-top: 12px;
+}
+
+/* Burle Marx dark mode */
+.main.dark { background: #0F1419; color: #F8F5EE; }
+.main.dark .brand { color: #9AA5B0; }
+.main.dark .bottomNav {
+  background: rgba(15, 20, 25, 0.92);
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+.main.dark .pill { border-color: rgba(255, 255, 255, 0.2); color: #F8F5EE; }
+.main.dark .pill.active { background: #F8F5EE; color: #0F1419; border-color: #F8F5EE; }
+.main.dark .viewToggle button { border-color: rgba(255, 255, 255, 0.2); }
+.main.dark .viewToggle button.active { background: #F8F5EE; color: #0F1419; }
+.main.dark .detailOverlay {
+  background: rgba(15, 20, 25, 0.92);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #F8F5EE;
+}
+.main.dark .detailOverlay .botanical,
+.main.dark .detailOverlay .meta { color: #9AA5B0; }
+.main.dark .detailOverlay .dynamics { color: #C2CBD3; }
+
+@media (max-width: 480px) {
+  .main { font-size: 14px; }
+}
