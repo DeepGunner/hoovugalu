@@ -1,86 +1,100 @@
 import React, { useEffect, useState } from 'react';
-import Cover from './Cover.jsx';
 import Bloom from './components/Bloom/Bloom.jsx';
 import BangaloreBloom from './BangaloreBloom.jsx';
+import Viz01Soundscape from './components/Viz01Soundscape.jsx';
+import Viz06Loop from './components/Viz06Loop.jsx';
 import styles from './App.module.css';
 
-function BackChip({ onBack }) {
+const NAV_ITEMS = [
+  { view: 'soundscape', label: 'Soundscape' },
+  { view: 'wheel', label: 'Bloom Calendar' },
+  { view: 'loop', label: 'Loop' },
+];
+
+function LandingTopBar({ current, onNav }) {
   return (
-    <button
-      onClick={onBack}
-      aria-label="Back to cover"
-      style={{
-        position: 'fixed',
-        top: 16,
-        left: 16,
-        zIndex: 9999,
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '8px 14px 8px 12px',
-        borderRadius: 999,
-        background: 'rgba(248, 245, 238, 0.92)',
-        border: '1px solid rgba(16,15,12,0.18)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        font: '10px/1 "Space Mono", monospace',
-        letterSpacing: '.22em',
-        textTransform: 'uppercase',
-        color: '#26201A',
-        cursor: 'pointer',
-        boxShadow: '0 2px 10px rgba(0,0,0,.08)',
-      }}
-    >
-      <span style={{ fontSize: 14, lineHeight: 1 }}>←</span>
-      Back
-    </button>
+    <header className="landing-topbar" role="banner">
+      <a
+        href="#"
+        className="landing-brand"
+        onClick={(e) => { e.preventDefault(); onNav('soundscape'); }}
+      >
+        Hoovugalu
+        <span className="landing-brand-sub">ಹೂವುಗಳು</span>
+      </a>
+      <nav className="landing-nav" aria-label="Primary">
+        {NAV_ITEMS.map((item) => (
+          <button
+            key={item.view}
+            type="button"
+            className={`landing-navlink${current === item.view ? ' is-active' : ''}`}
+            onClick={() => onNav(item.view)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </nav>
+    </header>
   );
 }
 
 const EXIT_MS = 280;
 
 export default function App() {
-  const [view, setView] = useState('cover');
+  const [view, setView] = useState('soundscape');
   const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
-    // Reset scroll when entering the cover so users see the hero.
-    if (view === 'cover') window.scrollTo(0, 0);
+    if (view === 'soundscape') window.scrollTo(0, 0);
   }, [view]);
 
   function navigate(next) {
-    if (next === view || exiting) return;
+    const nextView = typeof next === 'string' ? next : next.view;
+    if (nextView === view || exiting) return;
     setExiting(true);
     setTimeout(() => {
-      setView(next);
+      setView(nextView);
       setExiting(false);
     }, EXIT_MS);
   }
 
   const wrapperClass = exiting ? styles.pageExit : styles.pageEnter;
 
-  if (view === 'cover') {
+  if (view === 'soundscape') {
     return (
-      <div key="cover" className={wrapperClass}>
-        <Cover onSelect={navigate} />
+      <div key="soundscape" className={wrapperClass}>
+        <div className="snap-root landing-root">
+          <LandingTopBar current={view} onNav={navigate} />
+          <div className="snap-section landing-section">
+            <div className="snap-inner landing-inner">
+              <Viz01Soundscape isActive={true} />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
-  if (view === 'wheel') {
+  if (view === 'loop') {
     return (
-      <div key="wheel" className={wrapperClass}>
-        <BackChip onBack={() => navigate('cover')} />
-        <Bloom />
+      <div key="loop" className={wrapperClass}>
+        <div className="snap-root landing-root">
+          <LandingTopBar current={view} onNav={navigate} />
+          <div className="snap-section landing-section">
+            <div className="snap-inner landing-inner landing-loop">
+              <Viz06Loop isActive={true} />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
-  // view === 'snap'
+  // view === 'wheel'
   return (
-    <div key="snap" className={wrapperClass}>
-      <BackChip onBack={() => navigate('cover')} />
-      <BangaloreBloom />
+    <div key="wheel" className={wrapperClass}>
+      <LandingTopBar current={view} onNav={navigate} />
+      <Bloom />
     </div>
   );
 }

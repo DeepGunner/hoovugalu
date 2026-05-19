@@ -8,7 +8,11 @@ export const YEAR_DAYS = 365;
 const d = (m, day) => MONTH_START[m - 1] + day - 1;
 const w = (m, day) => MONTH_START[m - 1] + day - 1 + 365;
 
-export const SPECIES = [
+/* Issar-verified 10-species master palette. Each species has one or more bloom
+   windows; `peakStart`/`peakEnd` mark the saturated heart of each window. */
+const W = (s, e, ps, pe) => ({ start: s, end: e, peakStart: ps, peakEnd: pe });
+
+export const SPECIES_LEGACY_PLACEHOLDER = [
   { id: 'bombax-ceiba', common: 'Red Silk Cotton', botanical: 'Bombax ceiba', role: 'Primary Anchor',
     color: '#B91C1C', colorName: 'Crimson Red',
     macroStart: d(1, 1), macroEnd: d(2, 15), peakSegments: [[d(1, 15), d(2, 15)]],
@@ -89,6 +93,55 @@ export const SPECIES = [
     macroStart: 0, macroEnd: 364, peakSegments: [[0, 364]],
     durability: 'Permanent Structure',
     dynamics: 'Towering architectural backdrop that provides constant structural green across all seasons.' },
+];
+
+export const SPECIES = [
+  { id: 'slv', code: 'SLV', common: 'Silver Oak', botanical: 'Grevillea robusta',
+    origin: 'Australia', color: '#7A9E96', colorName: 'Evergreen Slate', role: 'Permanent Canopy',
+    peak: 'Year-round',
+    windows: [W(0, 364, 0, 364)] },
+  { id: 'ery', code: 'ERY', common: 'Coral Tree', botanical: 'Erythrina variegata',
+    origin: 'Indo-Pacific', color: '#C94028', colorName: 'Scarlet Coral',
+    peak: 'January (Dec return)',
+    windows: [
+      W(d(12, 1), 364, d(12, 15), 364),
+      W(0, d(1, 31), 0, d(1, 25)),
+    ] },
+  { id: 'jac', code: 'JAC', common: 'Jacaranda', botanical: 'Jacaranda mimosifolia',
+    origin: 'South America', color: '#6B55A0', colorName: 'Blue-Mauve',
+    peak: 'March (Feb–Apr)',
+    windows: [W(d(2, 1), d(4, 20), d(3, 1), d(3, 31))] },
+  { id: 'tab', code: 'TAB', common: 'Pink Trumpet', botanical: 'Tabebuia rosea',
+    origin: 'Central America', color: '#C84878', colorName: 'Rose Pink',
+    peak: 'February + Oct–Nov',
+    windows: [
+      W(d(2, 1), d(3, 10), d(2, 8), d(2, 25)),
+      W(d(10, 1), d(12, 25), d(10, 15), d(11, 15)),
+    ] },
+  { id: 'tye', code: 'TYE', common: 'Tree of Gold', botanical: 'Tabebuia argentea',
+    origin: 'South America', color: '#E6B800', colorName: 'Pure Gold',
+    peak: 'February',
+    windows: [W(d(2, 1), d(2, 28), d(2, 5), d(2, 25))] },
+  { id: 'aml', code: 'AML', common: 'Amaltas', botanical: 'Cassia fistula',
+    origin: 'South Asia', color: '#C89820', colorName: 'Golden Yellow',
+    peak: 'April (Apr–May)',
+    windows: [W(d(4, 1), d(5, 15), d(4, 10), d(5, 5))] },
+  { id: 'gul', code: 'GUL', common: 'Gulmohur', botanical: 'Delonix regia',
+    origin: 'Madagascar', color: '#D03A18', colorName: 'Flame Orange',
+    peak: 'May (Apr–Jun)',
+    windows: [W(d(4, 1), d(6, 15), d(5, 1), d(5, 31))] },
+  { id: 'poi', code: 'POI', common: 'Pride of India', botanical: 'Lagerstroemia speciosa',
+    origin: 'South Asia', color: '#8A4898', colorName: 'Monsoon Purple',
+    peak: 'July (Jun–Sep)',
+    windows: [W(d(6, 1), d(9, 15), d(7, 1), d(7, 31))] },
+  { id: 'spa', code: 'SPA', common: 'Scarlet Bell Tree', botanical: 'Spathodea campanulata',
+    origin: 'Uganda', color: '#C03818', colorName: 'Scarlet-Orange',
+    peak: 'August–October',
+    windows: [W(d(8, 1), d(10, 20), d(8, 15), d(10, 10))] },
+  { id: 'pel', code: 'PEL', common: 'Copper Pod', botanical: 'Peltophorum pterocarpum',
+    origin: 'South / SE Asia', color: '#C87820', colorName: 'Copper Gold',
+    peak: 'October (Sep–Nov)',
+    windows: [W(d(9, 15), d(11, 30), d(10, 1), d(10, 31))] },
 ];
 
 export const ARCHITECTS = [
