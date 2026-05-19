@@ -10,13 +10,20 @@ import useActiveSection from './hooks/useActiveSection.js';
 
 const N = 9;
 
-export default function BangaloreBloom() {
+export default function BangaloreBloom({ initialSection = 0 }) {
   const [active, refs] = useActiveSection(N);
   const [hintGone, setHintGone] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setHintGone(true), 3000);
     return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    if (!initialSection) return;
+    const el = refs[initialSection]?.current;
+    if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

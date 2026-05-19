@@ -185,8 +185,15 @@ void main(){
 
     function setup() {
       const par = cv.parentElement;
+      const isLanding = !!cv.closest('.landing-inner');
       W = par.clientWidth || 560;
-      H = Math.round(W * 0.54);
+      if (isLanding) {
+        H = par.clientHeight || Math.round(W * 0.54);
+      } else if (window.innerWidth <= 560) {
+        H = Math.round(window.innerHeight * 0.7);
+      } else {
+        H = Math.round(W * 0.54);
+      }
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       cv.width = Math.round(W * dpr);
       cv.height = Math.round(H * dpr);
@@ -210,7 +217,7 @@ void main(){
       const slvY = H * (0.50 + 0.18 * _sn(2.7, t * 0.20));
       const nBloom = bloomingThisMonth(activeM).length;
       SCTX.globalCompositeOperation = 'multiply';
-      const slvAlpha = nBloom > 2 ? 0.25 : 0.4;
+      const slvAlpha = nBloom > 2 ? 0.38 : 0.55;
       const slv = SCTX.createRadialGradient(slvX, slvY, 0, slvX, slvY, Math.max(W, H) * 0.65);
       slv.addColorStop(0, `rgba(${slvC.r},${slvC.g},${slvC.b},${slvAlpha})`);
       slv.addColorStop(0.5, `rgba(${slvC.r},${slvC.g},${slvC.b},${(slvAlpha * 0.5).toFixed(3)})`);
@@ -227,8 +234,8 @@ void main(){
         const by = H * (0.3 + 0.4 * _sn(phase, t * 0.25 + i * 2.7));
         const rad = Math.max(W, H) * (0.4 + intensity * 0.25);
         const grad = SCTX.createRadialGradient(bx, by, 0, bx, by, rad);
-        grad.addColorStop(0, `rgba(${c.r},${c.g},${c.b},${(intensity * 0.65).toFixed(3)})`);
-        grad.addColorStop(0.5, `rgba(${c.r},${c.g},${c.b},${(intensity * 0.3).toFixed(3)})`);
+        grad.addColorStop(0, `rgba(${c.r},${c.g},${c.b},${(intensity * 0.95).toFixed(3)})`);
+        grad.addColorStop(0.5, `rgba(${c.r},${c.g},${c.b},${(intensity * 0.55).toFixed(3)})`);
         grad.addColorStop(1, `rgba(${c.r},${c.g},${c.b},0)`);
         SCTX.fillStyle = grad;
         SCTX.fillRect(0, 0, W, H);
@@ -236,7 +243,7 @@ void main(){
       SCTX.globalCompositeOperation = 'source-over';
 
       const breezeT = t * 0.8;
-      const pAlphaScale = nBloom > 2 ? 0.32 : 0.45;
+      const pAlphaScale = nBloom > 2 ? 0.55 : 0.72;
       particles.forEach((p) => {
         const nx = (_sn(p.x * 0.003 + breezeT, p.y * 0.003 + p.nSeed) - 0.5) * 0.6;
         const ny = (_sn(p.y * 0.003 + p.nSeed, p.x * 0.003 + breezeT) - 0.5) * 0.4;
@@ -514,21 +521,23 @@ void main(){
 
   return (
     <section className="vs" id="v1">
-      <div className="vs-num" data-n="01">The Soundscape</div>
+      <div className="vs-num">Soundscape</div>
       <h2 className="vs-title">Listen to the city bloom.</h2>
       <p className="vs-desc">
-        Silver Oak holds the ambient drone — always present, always green. Drag the slider and let the city improvise: each flowering species enters by probability, not schedule. Peak bloom floods the air; quiet months leave only the hum of the canopy.
+        Move the slider across the months to watch the canopy shift color and hear the landscape translate into a full-color symphony.
       </p>
       <div className="vs-frame">
-        <canvas id="relay-cv" ref={cvRef} style={{ display: 'block', width: '100%' }} aria-label="Stratigraphic waveform" />
-        <div className="r-info">
-          <button id="r-play" className="play-btn" ref={playBtnRef} aria-label="Play music" title="Play / Pause">
-            <svg id="r-play-icon" ref={playIconRef} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <polygon points="6,3 20,12 6,21" fill="currentColor" />
-            </svg>
-          </button>
-          <span className="r-mo" id="r-mo" ref={moLblRef}></span>
-          <span className="r-sp" id="r-sp" ref={spLblRef}></span>
+        <div className="canvas-slot">
+          <canvas id="relay-cv" ref={cvRef} style={{ display: 'block' }} aria-label="Stratigraphic waveform" />
+          <div className="r-info">
+            <button id="r-play" className="play-btn" ref={playBtnRef} aria-label="Play music" title="Play / Pause">
+              <svg id="r-play-icon" ref={playIconRef} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="6,3 20,12 6,21" fill="currentColor" />
+              </svg>
+            </button>
+            <span className="r-mo" id="r-mo" ref={moLblRef}></span>
+            <span className="r-sp" id="r-sp" ref={spLblRef}></span>
+          </div>
         </div>
         <div className="ctrl-row">
           <input type="range" id="r-sl" ref={slRef} min="0" max="11" defaultValue="2" step="1" />
