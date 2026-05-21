@@ -506,31 +506,79 @@ export default function OrganicWheel({
       const norm = (theta + Math.PI / 2 + Math.PI * 2) % (Math.PI * 2);
       return Math.floor((norm / (Math.PI * 2)) * 12);
     }
+    // Drag-to-scrub — pressing inside the wheel grabs the wedge; moving
+    // sweeps it around the dial, firing onPickMonth(m) live so the wedge,
+    // background gradient, ticker, and stage colour all track the cursor.
+    let dragging = false;
+    let lastDragMonth = -1;
+
     function onClick(e) {
+      // Plain click still picks the month under the cursor, but only if
+      // we weren't mid-drag (drag handles its own pickMonth calls).
+      if (dragging) return;
       const m = pointToMonth(e.clientX, e.clientY);
       if (m != null) onPickMonth(m);
     }
+    function onPointerDown(e) {
+      const m = pointToMonth(e.clientX, e.clientY);
+      if (m == null) return;
+      dragging = true;
+      lastDragMonth = m;
+      onPickMonth(m);
+      try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    }
     function onMove(e) {
+      if (dragging) {
+        const m = pointToMonth(e.clientX, e.clientY);
+        if (m != null && m !== lastDragMonth) {
+          lastDragMonth = m;
+          onPickMonth(m);
+        }
+        return;
+      }
       if (!onHoverMonth) return;
       const m = pointToMonth(e.clientX, e.clientY);
       onHoverMonth(m);
+    }
+    function onPointerUp(e) {
+      if (!dragging) return;
+      dragging = false;
+      try { canvas.releasePointerCapture(e.pointerId); } catch (err) { /* ignore */ }
     }
     function onLeave() {
       if (onHoverMonth) onHoverMonth(null);
     }
     canvas.addEventListener('click', onClick);
+    canvas.addEventListener('pointerdown', onPointerDown);
     canvas.addEventListener('pointermove', onMove);
+    canvas.addEventListener('pointerup', onPointerUp);
+    canvas.addEventListener('pointercancel', onPointerUp);
     canvas.addEventListener('pointerleave', onLeave);
 
     return () => {
       cancelAnimationFrame(rafRef.current);
       window.removeEventListener('resize', resize);
       canvas.removeEventListener('click', onClick);
+      canvas.removeEventListener('pointerdown', onPointerDown);
       canvas.removeEventListener('pointermove', onMove);
+      canvas.removeEventListener('pointerup', onPointerUp);
+      canvas.removeEventListener('pointercancel', onPointerUp);
       canvas.removeEventListener('pointerleave', onLeave);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <canvas ref={canvasRef} style={{ display: 'block', cursor: 'pointer', width: '100%', height: '100%', position: 'relative', zIndex: 2 }} />;
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        display: 'block',
+        cursor: 'grab',
+        width: '100%', height: '100%',
+        position: 'relative',
+        zIndex: 2,
+        touchAction: 'none', /* prevent page scroll while dragging on touch */
+      }}
+    />
+  );
 }

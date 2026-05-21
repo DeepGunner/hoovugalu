@@ -132,6 +132,127 @@ body:has(.about-page) .landing-topbar {
 }
 .landing-menu:hover{ background:rgba(16,15,12,.06); }
 .landing-topbar-spacer{ justify-self:end; }
+/* Info button — mirror image of the hamburger, sits in the top-right.
+   Same circular white pill + breathing pulse + rotation on activate. */
+.landing-info{
+  justify-self:end;
+  background:#FFFFFF; border:1px solid rgba(16,15,12,.08); cursor:pointer;
+  padding:0; margin:0;
+  color:var(--ink);
+  display:inline-flex; align-items:center; justify-content:center;
+  width:44px; height:44px; border-radius:50%;
+  box-shadow:0 4px 14px rgba(20,15,10,.08);
+  position:relative; z-index:100;
+  transition:transform .25s cubic-bezier(.4,.0,.2,1), box-shadow .25s ease;
+}
+.landing-info:hover{ box-shadow:0 6px 18px rgba(20,15,10,.14); }
+.landing-info:active{ transform:scale(1.08); }
+.landing-info.is-open{ box-shadow:0 6px 18px rgba(20,15,10,.16); }
+
+/* Viewports info page — replaces the current data view in place; the
+   topbar persists above. No backdrop blur, just a clean cream canvas with
+   editorial text centred on the page. */
+.viewports-page{
+  position:relative;
+  width:100%;
+  height:100%;
+  min-height:100vh;
+  min-height:100dvh;
+  max-height:100vh;
+  max-height:100dvh;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  background:#F8F5EE;
+  display:flex; justify-content:center;
+  padding:88px 22px 56px;
+  box-sizing:border-box;
+  animation:viewportsIn .32s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes viewportsIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.viewports-card{
+  width:100%;
+  max-width:640px;
+  padding:24px 0 0;
+  color:#1A140F;
+}
+.viewports-title{
+  font-family:'Cormorant Garamond', Georgia, serif;
+  font-style:italic; font-weight:700;
+  font-size:32px; line-height:1.15;
+  margin:0 0 18px;
+  color:#000;
+}
+.viewports-intro{
+  font-family:'Inter', system-ui, sans-serif;
+  font-size:15px; line-height:1.6;
+  margin:0 0 18px;
+  color:#1A140F;
+}
+.viewports-item{
+  font-family:'Inter', system-ui, sans-serif;
+  font-size:15px; line-height:1.65;
+  margin:0 0 14px;
+  color:#1A140F;
+}
+.viewports-item:last-child{ margin-bottom:0; }
+.viewports-item strong em,
+.viewports-item em strong{ font-weight:700; font-style:italic; }
+.viewports-item strong{ font-weight:700; }
+
+/* Per-viewport section blocks with the drawer-style nature icon. */
+.viewports-section{
+  margin:24px 0 8px;
+  padding-top:18px;
+  border-top:1px solid rgba(26,20,15,0.08);
+}
+.viewports-section-head{
+  display:flex; align-items:center; gap:12px;
+  margin-bottom:10px;
+}
+.viewports-section-icon{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:34px; height:34px;
+  flex:0 0 auto;
+}
+.viewports-section-title{
+  margin:0;
+  font-family:'Cormorant Garamond', Georgia, serif;
+  font-style:italic; font-weight:700;
+  font-size:22px; line-height:1.2;
+  color:#000;
+}
+.viewports-footnote{
+  margin:28px 0 0;
+  padding-top:18px;
+  border-top:1px solid rgba(26,20,15,0.08);
+  font-family:'Inter', system-ui, sans-serif;
+  font-size:14px; line-height:1.6;
+  color:#3A3128;
+}
+.viewports-link{
+  background:none; border:none; padding:0; margin:0;
+  cursor:pointer;
+  font:inherit;
+  color:#1A140F;
+  text-decoration:underline;
+  text-underline-offset:3px;
+  text-decoration-thickness:1px;
+}
+.viewports-link:hover{ color:#4A6B52; }
+@media (min-width:900px){
+  .viewports-section-title{ font-size:28px; }
+  .viewports-section-icon{ width:42px; height:42px; }
+  .viewports-footnote{ font-size:16px; }
+}
+@media (min-width:900px){
+  .viewports-card{ padding:48px 48px 56px; max-width:720px; }
+  .viewports-title{ font-size:44px; margin-bottom:24px; }
+  .viewports-intro{ font-size:17px; margin-bottom:22px; }
+  .viewports-item{ font-size:17px; line-height:1.7; margin-bottom:18px; }
+}
 /* Brand — two logo SVGs (English + Kannada) cross-fade in the same slot. */
 .landing-brand{
   justify-self:center;
@@ -290,6 +411,37 @@ body:has(.about-page) .landing-topbar {
 .about-body em strong {
   font-weight: 700;
   font-style: italic;
+}
+
+/* Viewport sub-headers (Soundscape / Bloom Calendar / Loop) inside About */
+.about-viewport-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 28px 0 6px;
+}
+.about-viewport-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px;
+  flex: 0 0 auto;
+}
+.about-viewport-title {
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.2;
+  color: #000;
+}
+.about-viewport-tagline {
+  font-weight: 600 !important;
+  margin-top: 2px !important;
+  margin-bottom: 6px !important;
+}
+@media (min-width: 900px) {
+  .about-viewport-icon { width: 42px; height: 42px; }
+  .about-viewport-title { font-size: 28px; }
 }
 
 /* Section headers — serif chapter dividers, matching the title family. */

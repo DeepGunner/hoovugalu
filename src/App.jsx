@@ -8,7 +8,7 @@ import Landing from './components/Landing.jsx';
 import AboutUs from './components/AboutUs.jsx';
 import styles from './App.module.css';
 
-const NavIcon = ({ kind }) => {
+export const NavIcon = ({ kind }) => {
   // Hand-drawn nature-themed icon family. Each motif is tied to its page's
   // content and rendered with its own colour palette so the drawer reads as
   // a small herbarium of species marks rather than monochrome glyphs.
@@ -137,10 +137,122 @@ function HamburgerIcon() {
     </svg>
   );
 }
+function InfoIcon() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
+      <text
+        x="15" y="22"
+        textAnchor="middle"
+        fontFamily="'Cormorant Garamond', Georgia, serif"
+        fontSize="22"
+        fontStyle="italic"
+        fontWeight="700"
+        fill="currentColor"
+      >i</text>
+    </svg>
+  );
+}
+function CloseIcon() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
+      <line x1="8" y1="8" x2="22" y2="22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <line x1="22" y1="8" x2="8" y2="22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
 
-function LandingTopBar({ current, onNav }) {
+/* Viewports info — full content page that replaces the current viewport
+   in place (topbar persists). Same content for Soundscape / Bloom Calendar
+   / Loop; the page just covers whichever data view the user was on. */
+function ViewportsPage({ onNav }) {
+  return (
+    <main className="viewports-page">
+      <article className="viewports-card">
+        <h2 className="viewports-title">Welcome to Hoovugalu</h2>
+        <p className="viewports-intro">
+          Bangalore's famous canopy isn't an accident, it's a living
+          calendar. This project explores a century-old masterwork by
+          landscape architect Gustav Krumbiegel, who serially planted
+          flowering trees so the city would change color every month.
+        </p>
+        <p className="viewports-intro">
+          Explore this living archive through three interactive lenses.
+        </p>
+
+        <section className="viewports-section">
+          <div className="viewports-section-head">
+            <span className="viewports-section-icon"><NavIcon kind="soundscape" /></span>
+            <h3 className="viewports-section-title">Soundscape</h3>
+          </div>
+          <p className="viewports-item">
+            <strong>What it is.</strong> A musical translation of the city.
+            Tree colors are mapped to music notes, layered with regional
+            weather and bird songs.
+          </p>
+          <p className="viewports-item">
+            <strong>What to do.</strong> Press Play to start the score,
+            then drag the Timeline Slider to watch and hear the canopy shift
+            month-by-month.
+          </p>
+        </section>
+
+        <section className="viewports-section">
+          <div className="viewports-section-head">
+            <span className="viewports-section-icon"><NavIcon kind="wheel" /></span>
+            <h3 className="viewports-section-title">Bloom Calendar</h3>
+          </div>
+          <p className="viewports-item">
+            <strong>What it is.</strong> A visual clock tracking
+            Krumbiegel's deliberate color contrasts. Tracing a continuous
+            layout with no gap months ensures a tree is always in bloom.
+          </p>
+          <p className="viewports-item">
+            <strong>What to do.</strong> Tap and sweep around the circular
+            dial to focus on a season, and use the Filter Pills to compare
+            his layout with modern landscapes.
+          </p>
+        </section>
+
+        <section className="viewports-section">
+          <div className="viewports-section-head">
+            <span className="viewports-section-icon"><NavIcon kind="loop" /></span>
+            <h3 className="viewports-section-title">Loop</h3>
+          </div>
+          <p className="viewports-item">
+            <strong>What it is.</strong> A timeline matrix charting 118
+            years of color data since 1908. Mapping serial blossom windows
+            across the years shows how this canopy gave Bangalore the name
+            garden city.
+          </p>
+          <p className="viewports-item">
+            <strong>What to do.</strong> Tap any pixel coordinate on the
+            grid to trigger its sound profile, and open the Glass Detail
+            Drawer to read that tree's localized history.
+          </p>
+        </section>
+
+        <p className="viewports-footnote">
+          Want to dive deeper into the history, climate data, and design
+          philosophies? Check out our full{' '}
+          <button
+            type="button"
+            className="viewports-link"
+            onClick={() => onNav('about')}
+          >
+            About page
+          </button>{' '}
+          in the main menu.
+        </p>
+      </article>
+    </main>
+  );
+}
+
+function LandingTopBar({ current, onNav, infoOpen, onToggleInfo }) {
   const [open, setOpen] = useState(false);
   const [showKn, setShowKn] = useState(false);
+  // Info button only shows on the three data viewports; not on home / about.
+  const showInfo = current === 'soundscape' || current === 'wheel' || current === 'loop';
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
@@ -198,7 +310,19 @@ function LandingTopBar({ current, onNav }) {
             </span>
           </a>
         )}
-        <span className="landing-topbar-spacer" aria-hidden="true" />
+        {showInfo ? (
+          <button
+            type="button"
+            className={`landing-info${infoOpen ? ' is-open' : ''}`}
+            aria-label={infoOpen ? 'Close information' : 'About the viewports'}
+            aria-expanded={infoOpen}
+            onClick={onToggleInfo}
+          >
+            {infoOpen ? <CloseIcon /> : <InfoIcon />}
+          </button>
+        ) : (
+          <span className="landing-topbar-spacer" aria-hidden="true" />
+        )}
       </header>
       {createPortal(
         <>
@@ -238,6 +362,10 @@ const EXIT_MS = 280;
 export default function App() {
   const [view, setView] = useState('home');
   const [exiting, setExiting] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
+  // Close the info page whenever the route changes (going to a different
+  // viewport, home, or about should return to the data page itself).
+  useEffect(() => { setInfoOpen(false); }, [view]);
 
   useEffect(() => {
     if (view === 'soundscape') window.scrollTo(0, 0);
@@ -262,22 +390,29 @@ export default function App() {
     return (
       <div className="page-slide">
         <div key="home" className={wrapperClass}>
-          <LandingTopBar current={view} onNav={navigate} />
+          <LandingTopBar current={view} onNav={navigate} infoOpen={false} onToggleInfo={() => {}} />
           <Landing onNav={navigate} />
         </div>
       </div>
     );
   }
 
+  const topBarProps = {
+    current: view,
+    onNav: navigate,
+    infoOpen,
+    onToggleInfo: () => setInfoOpen((v) => !v),
+  };
+
   if (view === 'soundscape') {
     return (
       <div className="page-slide">
         <div key="soundscape" className={wrapperClass}>
           <div className="snap-root landing-root">
-            <LandingTopBar current={view} onNav={navigate} />
+            <LandingTopBar {...topBarProps} />
             <div className="snap-section landing-section">
               <div className="snap-inner landing-inner">
-                <Viz01Soundscape isActive={true} />
+                {infoOpen ? <ViewportsPage onNav={navigate} /> : <Viz01Soundscape isActive={true} />}
               </div>
             </div>
           </div>
@@ -291,10 +426,10 @@ export default function App() {
       <div className="page-slide">
         <div key="loop" className={wrapperClass}>
           <div className="snap-root landing-root">
-            <LandingTopBar current={view} onNav={navigate} />
+            <LandingTopBar {...topBarProps} />
             <div className="snap-section landing-section">
               <div className="snap-inner landing-inner landing-loop">
-                <Viz06Loop isActive={true} />
+                {infoOpen ? <ViewportsPage onNav={navigate} /> : <Viz06Loop isActive={true} />}
               </div>
             </div>
           </div>
@@ -307,7 +442,7 @@ export default function App() {
     return (
       <div className="page-slide">
         <div key="about" className={wrapperClass}>
-          <LandingTopBar current={view} onNav={navigate} />
+          <LandingTopBar {...topBarProps} />
           <AboutUs />
         </div>
       </div>
@@ -318,8 +453,8 @@ export default function App() {
   return (
     <div className="page-slide">
       <div key="wheel" className={wrapperClass}>
-        <LandingTopBar current={view} onNav={navigate} />
-        <Bloom />
+        <LandingTopBar {...topBarProps} />
+        {infoOpen ? <ViewportsPage onNav={navigate} /> : <Bloom />}
       </div>
     </div>
   );

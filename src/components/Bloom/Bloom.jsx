@@ -163,8 +163,7 @@ export default function Bloom() {
         <p className="vs-num">Bloom Calendar</p>
         <h1 className="vs-title">The year-long ritusamhara</h1>
         <p className="vs-desc">
-          The continuous, overlapping handoff of seasonal color.
-          Tracking a century-old symphony of the city's streets in serial bloom.
+          Tap and sweep around the dial to focus on each month and track the city's overlapping canopy handoff.
         </p>
       </section>
 
