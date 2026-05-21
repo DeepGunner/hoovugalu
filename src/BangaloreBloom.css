@@ -412,6 +412,22 @@ body:has(.about-page) .landing-topbar {
   font-weight: 700;
   font-style: italic;
 }
+/* Inline name links — keep the bold-italic emphasis, add a subtle
+   underline that strengthens on hover. */
+.about-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: rgba(26, 20, 15, 0.35);
+  transition: text-decoration-color .15s ease, color .15s ease;
+}
+.about-link:hover,
+.about-link:focus-visible {
+  color: #4A6B52;
+  text-decoration-color: #4A6B52;
+  outline: none;
+}
 
 /* Viewport sub-headers (Soundscape / Bloom Calendar / Loop) inside About */
 .about-viewport-head {
@@ -571,8 +587,8 @@ body:has(.about-page) .landing-topbar {
   /* Big enough that every line of the narrative — including the
      widest BLOOM CALENDAR row — sits comfortably inside the circle
      on both desktop and mobile portrait viewports. */
-  width: min(612px, 102vw);
-  height: min(612px, 102vw);
+  width: min(673px, 112vw);
+  height: min(673px, 112vw);
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.06);
@@ -641,8 +657,8 @@ body:has(.about-page) .landing-topbar {
     margin-bottom: 32px;
   }
   .landing-hero-aura {
-    width: min(763px, 56vw);
-    height: min(763px, 56vw);
+    width: min(755px, 56vw);
+    height: min(755px, 56vw);
   }
 }
 /* Inline gateway — Space Mono bold uppercase capsule, wrapped between the

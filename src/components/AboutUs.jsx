@@ -32,9 +32,20 @@ export default function AboutUs() {
         </p>
         <p className="about-body">
           Hoovugalu, the Kannada word for "flowers," explores that
-          invisible clockwork. Designed and built by Gurpreet Kaur and
-          Deepinder Singh, it is an interactive recording of a century-old
-          chromatic handoff.
+          invisible clockwork. Designed and built by{' '}
+          <a
+            className="about-link"
+            href="https://www.linkedin.com/in/kaurdsgn/"
+            target="_blank"
+            rel="noopener noreferrer"
+          ><strong><em>Gurpreet Kaur</em></strong></a> and{' '}
+          <a
+            className="about-link"
+            href="https://www.linkedin.com/in/singh-deepinder/"
+            target="_blank"
+            rel="noopener noreferrer"
+          ><strong><em>Deepinder Singh</em></strong></a>, it is an interactive
+          recording of a century-old chromatic handoff.
         </p>
 
         <p className="about-eyebrow about-eyebrow-section">The Viewports</p>
