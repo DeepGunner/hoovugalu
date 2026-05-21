@@ -44,7 +44,7 @@ export default function Landing({ onNav }) {
           />
         </span>
         <p className="landing-hero-prose">
-          A year-long ritusamhara of Gustav Krumbiegel's programmed streets.
+          A year-long ritusamhara of Gustav Krumbiegel's programmed streets of Bangalore.
           Step inside to experience the city's sonic rhythms via{' '}
           <button
             type="button"

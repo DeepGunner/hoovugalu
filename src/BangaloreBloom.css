@@ -498,8 +498,8 @@ body:has(.about-page) .landing-topbar {
    to press without building hard block borders. */
 .landing-hero-gateway {
   display: inline-block;
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.52);
   border-radius: 6px;
   padding: 3px 10px;
   margin: 0 0 0 4px;
@@ -518,7 +518,7 @@ body:has(.about-page) .landing-topbar {
 }
 .landing-hero-gateway:hover,
 .landing-hero-gateway:focus-visible {
-  background: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.63);
   box-shadow: 0 4px 14px rgba(20, 15, 10, 0.16);
 }
 /* Tactile tap flash — capsule fills SOLID white, text snaps to crisp
