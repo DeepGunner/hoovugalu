@@ -326,8 +326,12 @@ void main(){
     let ambience = null;
     let currentSeason = null;
     const SCALES = {
-      spring: ['E4', 'F#4', 'A4', 'B4', 'C#5', 'E5', 'F#5', 'A5'],
-      monsoon: ['C4', 'Eb4', 'F4', 'G4', 'Bb4', 'C5', 'Eb5', 'F5'],
+      // Lower-register scales for spring (Mar–Apr) and monsoon (May–Aug):
+      // the high notes (A5, F#5, F5, Eb5) read as piercing on phone
+      // speakers when struck cold. Trimmed to keep just the warm middle
+      // register so the attack feels rounded instead of sharp.
+      spring: ['E3', 'F#3', 'A3', 'B3', 'C#4', 'E4', 'F#4', 'A4'],
+      monsoon: ['C3', 'Eb3', 'F3', 'G3', 'Bb3', 'C4', 'Eb4', 'F4'],
       autumn: ['D4', 'F4', 'G4', 'A4', 'C5', 'D5', 'F5'],
       winter: ['C4', 'D4', 'F4', 'G4', 'A4', 'C5', 'D5'],
     };
@@ -348,10 +352,12 @@ void main(){
       await Tone.start();
       reverb = new Tone.Reverb({ decay: 9, wet: 0.84 }).toDestination();
       const dly = new Tone.FeedbackDelay('8n.', 0.20).connect(reverb);
+      // Softer attack (0.5 → 1.4) so notes fade in like petals instead of
+      // striking on, with a touch quieter overall volume.
       blossomSynth = new Tone.PolySynth(Tone.Synth, {
         oscillator: { type: 'sine' },
-        envelope: { attack: 0.5, decay: 2.0, sustain: 0.12, release: 5 },
-        volume: -13,
+        envelope: { attack: 1.4, decay: 2.4, sustain: 0.10, release: 6 },
+        volume: -16,
       }).connect(dly);
       droneSynth = new Tone.PolySynth(Tone.Synth, {
         oscillator: { type: 'fatsine', count: 3, spread: 12 },
@@ -566,7 +572,7 @@ void main(){
               <span className="r-sp" id="r-sp" ref={spLblRef}></span>
             </div>
             <div className="ctrl-row">
-              <input type="range" id="r-sl" ref={slRef} min="0" max="11" defaultValue="2" step="1" />
+              <input type="range" id="r-sl" ref={slRef} min="0" max="11" defaultValue="4" step="1" />
             </div>
             <div className="mo-ticks" id="r-ticks" ref={ticksRef}>
               {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map((m, i) => (

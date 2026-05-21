@@ -449,11 +449,16 @@
   /* Calm the breathing on mobile — keep the wobbly clip but stop the rotation */
   .wheelAura { animation: none; }
   .wheelHolder {
-    width: min(94vw, 56vh);
-    max-width: 480px;
-    max-height: 56vh;
+    /* Trim the wheel so the ticker widget below stays inside the viewport
+       on mobile. Was 56vh — too tall, pushed the ticker off-screen. */
+    width: min(88vw, 46vh);
+    max-width: 420px;
+    max-height: 46vh;
     margin: 0 auto;
   }
+  /* Squeeze the right panel's vertical padding too — every pixel saved
+     here gives the ticker room to sit in the viewport. */
+  .rightPanel { padding: 0 !important; }
   .monthInfo { padding: 14px 14px 12px; }
   .monthInfoTitle { font-size: 22px; }
   /* Force 2-column species grid on mobile for readability */
