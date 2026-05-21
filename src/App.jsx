@@ -226,14 +226,13 @@ function ViewportsPage({ onNav }) {
           </p>
           <p className="viewports-item">
             <strong>What to do.</strong> Tap any pixel coordinate on the
-            grid to trigger its sound profile, and open the Glass Detail
-            Drawer to read that tree's localized history.
+            grid to trigger its sound profile, and read that tree's
+            localized history.
           </p>
         </section>
 
         <p className="viewports-footnote">
-          Want to dive deeper into the history, climate data, and design
-          philosophies? Check out our full{' '}
+          Check out{' '}
           <button
             type="button"
             className="viewports-link"
@@ -241,7 +240,7 @@ function ViewportsPage({ onNav }) {
           >
             About page
           </button>{' '}
-          in the main menu.
+          for more details.
         </p>
       </article>
     </main>

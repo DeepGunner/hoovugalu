@@ -25,7 +25,7 @@ export default function AboutUs() {
         </p>
         <p className="about-body">
           Krumbiegel wasn't just planting flowering trees; he was composing
-          a symphony. He engineered the precise contrasts that would make
+          a symphony. He composed the precise contrasts that would make
           each season land: the dark evergreen columns acting as a permanent
           visual wall to make March erupt, April gold feel like relief, and
           May red feel like intensity.
@@ -71,7 +71,7 @@ export default function AboutUs() {
 
         <div className="about-viewport-head">
           <span className="about-viewport-icon"><NavIcon kind="wheel" /></span>
-          <h3 className="about-viewport-title">The Bloom Calendar</h3>
+          <h3 className="about-viewport-title">Bloom Calendar</h3>
         </div>
         <p className="about-body about-viewport-tagline">
           A visual clock of seasonal contrasts.
@@ -87,7 +87,7 @@ export default function AboutUs() {
 
         <div className="about-viewport-head">
           <span className="about-viewport-icon"><NavIcon kind="loop" /></span>
-          <h3 className="about-viewport-title">The Loop</h3>
+          <h3 className="about-viewport-title">Loop</h3>
         </div>
         <p className="about-body about-viewport-tagline">
           A historical timeline matrix.

@@ -559,7 +559,7 @@ void main(){
       <div className="vs-num">Soundscape</div>
       <h2 className="vs-title">Listen to the city bloom.</h2>
       <p className="vs-desc">
-        Hit play and move the slider across the months to watch the canopy shift color and hear the landscape tune in.
+        Press play and move the slider across the months to watch the canopy shift color and hear the landscape tune in.
       </p>
       <div className="vs-frame">
         <div className="canvas-slot">
