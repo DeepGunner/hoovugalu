@@ -704,9 +704,9 @@ export default function Viz06Loop({ isActive = true }) {
   return (
     <section className="vs" id="v6">
       <div className="vs-num">Loop</div>
-      <h2 className="vs-title">A tapestry playing on since 1908.</h2>
+      <h2 className="vs-title">Playing since 1908.</h2>
       <p className="vs-desc">
-        Tap any pixel to reveal that month's color, its sonic hum, and tree details.
+        Tap any pixel in the tapestry to reveal that month's color, sonic hum, and tree details.
       </p>
       <div
         className="vs-frame"

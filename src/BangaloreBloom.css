@@ -587,8 +587,8 @@ body:has(.about-page) .landing-topbar {
   /* Big enough that every line of the narrative — including the
      widest BLOOM CALENDAR row — sits comfortably inside the circle
      on both desktop and mobile portrait viewports. */
-  width: min(673px, 112vw);
-  height: min(673px, 112vw);
+  width: min(760px, 128vw);
+  height: min(760px, 128vw);
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.06);
@@ -598,9 +598,12 @@ body:has(.about-page) .landing-topbar {
   z-index: -1;
   animation: landingAuraBreath 6s ease-in-out infinite;
 }
+/* Subtle breath — keep the aura always at ≥ scale 1 so the gateway pills
+   never poke outside its edge. Scale variance reduced 5% → 2%; the breath
+   reads via opacity now. */
 @keyframes landingAuraBreath {
   0%, 100% { transform: translate(-50%, -50%) scale(1.00); opacity: 0.94; }
-  50%      { transform: translate(-50%, -50%) scale(1.05); opacity: 1.00; }
+  50%      { transform: translate(-50%, -50%) scale(1.02); opacity: 1.00; }
 }
 /* Logo cross-fade slot — fixed-size container so the two SVGs overlap and
    cross-fade in place every 6s. */
@@ -629,7 +632,7 @@ body:has(.about-page) .landing-topbar {
   font-style: italic;
   font-weight: 700;
   font-size: clamp(18px, 2vw, 24px);
-  line-height: 1.55;
+  line-height: 1.7;
   letter-spacing: 0.02em;
   color: #1A1523;
   margin: 0;
@@ -643,8 +646,8 @@ body:has(.about-page) .landing-topbar {
   }
   .landing-hero-prose {
     font-size: 30px;
-    /* keep the typographic spec (1.55 line-height, 0.02em tracking) on desktop too */
-    line-height: 1.55;
+    /* Roomy line-height so inline gateway pills don't touch the line above/below */
+    line-height: 1.75;
     letter-spacing: 0.02em;
   }
   .landing-hero-gateway {
@@ -669,17 +672,20 @@ body:has(.about-page) .landing-topbar {
   background: rgba(255, 255, 255, 0.45);
   border: 1px solid rgba(255, 255, 255, 0.52);
   border-radius: 6px;
-  padding: 3px 10px;
+  padding: 1px 10px 2px;
   margin: 0 0 0 4px;
   cursor: pointer;
   font-family: 'Space Mono', monospace;
   font-style: normal;
   font-weight: 700;
-  font-size: 0.78em;
+  font-size: 0.74em;
+  line-height: 1.2;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: #000000;
-  vertical-align: baseline;
+  /* Sit on the text baseline (slightly lifted) so the pill stays inside
+     the same line of text it appears on. */
+  vertical-align: -0.18em;
   box-shadow: 0 2px 8px rgba(20, 15, 10, 0.10);
   transition: background .12s ease, color .12s ease, box-shadow .12s ease;
   outline: none;
