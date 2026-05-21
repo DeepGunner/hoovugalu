@@ -1531,3 +1531,35 @@ input[type="range"]::-moz-range-thumb{
   .loop-ring,.loop-wrap{width:180px;height:180px;}
   .loop-center{width:66px;height:66px;}
 }
+
+/* ── Ultra-wide / 4K caps ──
+   Above 1800px (≥2K and 4K monitors), every desktop type rule scales down
+   so the editorial column feels proportionate to a far-back viewer
+   instead of looming. */
+@media (min-width: 1800px) {
+  .landing-inner.snap-inner .vs-num { font-size: 14px; letter-spacing: 0.22em; }
+  .landing-inner.snap-inner .vs-title { font-size: 52px; }
+  .landing-inner.snap-inner .vs-desc { font-size: 17px; }
+
+  .bloom-header .vs-title { font-size: 52px !important; }
+  .bloom-header .vs-num { font-size: 14px !important; }
+  .bloom-header .vs-desc { font-size: 17px !important; }
+
+  .about-title { font-size: 56px; }
+  .about-eyebrow-section { font-size: 30px !important; margin-top: 56px; }
+  .about-viewport-title { font-size: 24px; }
+  .about-body { font-size: 16px; line-height: 1.7; }
+  .about-sources { font-size: 16px; }
+
+  .viewports-title { font-size: 36px; }
+  .viewports-section-title { font-size: 24px; }
+  .viewports-intro,
+  .viewports-item { font-size: 16px; }
+  .viewports-footnote { font-size: 15px; }
+
+  .landing-hero-prose { font-size: 24px; line-height: 1.55; }
+  .landing-hero-gateway { font-size: 0.66em; padding: 3px 9px; }
+  .landing-hero-logo-slot { width: 280px; height: 80px; }
+
+  .landing-drawer-link { font-size: 18px; }
+}
