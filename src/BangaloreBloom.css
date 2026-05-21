@@ -641,8 +641,8 @@ body:has(.about-page) .landing-topbar {
     margin-bottom: 32px;
   }
   .landing-hero-aura {
-    width: min(816px, 60vw);
-    height: min(816px, 60vw);
+    width: min(763px, 56vw);
+    height: min(763px, 56vw);
   }
 }
 /* Inline gateway — Space Mono bold uppercase capsule, wrapped between the

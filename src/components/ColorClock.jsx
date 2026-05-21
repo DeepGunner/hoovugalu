@@ -187,8 +187,34 @@ export default function ColorClock({ className, style }) {
       // it stays legible regardless of which season palette is behind it.
       // The colored season tint reads as a tip flare, and the dark core
        // never camouflages into the matching background colour.
-      const hx = cx + Math.cos(handAngle) * (Math.min(W, H) * 0.46);
-      const hy = cy + Math.sin(handAngle) * (Math.min(W, H) * 0.46);
+      // Hand length adapts to the visible portion of the canvas after
+      // object-fit:cover crops it. The 16:9 canvas sits inside the
+      // viewport; we measure the visible-half horizontally and vertically
+      // in CANVAS pixels and cap the hand to whichever is smaller. That
+      // way on a wide desktop the hand can stretch to 66% of min(W,H)
+      // (clearing the aura), while on a narrow portrait phone the hand
+      // shrinks so the tip never gets cropped at the side of the screen.
+      const cw = canvas.clientWidth || W;
+      const ch = canvas.clientHeight || H;
+      const cover = Math.max(cw / W, ch / H);
+      // visHalfW / visHalfH express the visible half-extents in CANVAS px
+      // (after object-fit:cover crops). On portrait phones visHalfW is
+      // small so the hand auto-shrinks to stay inside the screen.
+      const visHalfW = cover > 0 ? (cw / cover) / 2 : Math.min(W, H) * 0.5;
+      const visHalfH = cover > 0 ? (ch / cover) / 2 : Math.min(W, H) * 0.5;
+      // Floor at 0.42 × min(W,H) so we never produce a dot — even when the
+      // visible width is very narrow, the hand still reaches a sensible
+      // length toward the tip glow.
+      const handMax = Math.max(
+        Math.min(W, H) * 0.42,
+        Math.min(
+          Math.min(W, H) * 0.66,
+          visHalfW * 0.94,
+          visHalfH * 0.94
+        )
+      );
+      const hx = cx + Math.cos(handAngle) * handMax;
+      const hy = cy + Math.sin(handAngle) * handMax;
       // Colored halo (under-stroke) — broad, soft glow
       const halo = ctx.createLinearGradient(cx, cy, hx, hy);
       halo.addColorStop(0,    rgba(lc, 0.20));
@@ -203,8 +229,8 @@ export default function ColorClock({ className, style }) {
 
       // Minute hand — thinner, but same dual treatment (dark core + faint halo)
       const minAngle = mAngle(prog * 12 * 12);
-      const mx2 = cx + Math.cos(minAngle) * (Math.min(W, H) * 0.42);
-      const my2 = cy + Math.sin(minAngle) * (Math.min(W, H) * 0.42);
+      const mx2 = cx + Math.cos(minAngle) * (handMax * 0.92);
+      const my2 = cy + Math.sin(minAngle) * (handMax * 0.92);
       ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(mx2, my2);
       ctx.strokeStyle = rgba(lc, 0.50); ctx.lineWidth = 4.5; ctx.lineCap = 'round'; ctx.stroke();
       ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(mx2, my2);
