@@ -473,6 +473,9 @@ void main(){
         `<span class="r-sp-inner">${chipsHTML}</span>` +
         `<span class="r-sp-inner" aria-hidden="true">${chipsHTML}</span>`;
       setTargets(m);
+      // Snap particles to their new targets immediately so the colour shift
+      // registers visually on month click instead of slowly easing over.
+      particles.forEach((p) => { p.r = p.tr; p.a = p.ta; });
       highlightTick(m);
       buildLegend(m);
       if (audioReady && isPlaying) startSoundscape(m);
