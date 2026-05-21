@@ -14,10 +14,14 @@
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   min-height: 100dvh;
+  /* Strict viewport bound so the 30/70 split never triggers a scroll */
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   padding-top: 56px;
-  transition: background 700ms ease;
+  transition: background 1600ms cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 .main button { font: inherit; cursor: pointer; }
@@ -55,75 +59,148 @@
   max-width: 780px;
 }
 
+/* Sliding-capsule filter — LIGHT glass per Shared Glass Architecture
+   (light glass frames UI, dark glass filters data). Matches the
+   Soundscape player-card glass: rgba(255,255,255,0.14) + 28px blur +
+   white border + inset highlight. */
 .pills {
+  position: relative;
   display: flex;
-  gap: 8px;
-  padding: 14px 14px 8px;
   align-self: center;
-  background: rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(16, 15, 12, 0.08);
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(28px) saturate(1.5);
+  -webkit-backdrop-filter: blur(28px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  box-shadow:
+    0 6px 22px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.40);
   border-radius: 999px;
-  padding: 6px;
+  padding: 3px;
   z-index: 3;
 }
+/* Thumb disabled — each pill now owns its own background so it sizes to
+   its label content. The active state cross-fades the capsule fill rather
+   than sliding a fixed-width thumb across mismatched-length labels. */
+.pillThumb { display: none; }
 .pill {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
   background: transparent;
   border: none;
   border-radius: 999px;
-  padding: 7px 16px;
-  color: var(--ink);
-  font-family: var(--serif);
-  font-style: italic;
-  font-size: 14px;
+  padding: 9px 22px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: .01em;
   line-height: 1.1;
   white-space: nowrap;
-  opacity: 0.7;
-  transition: background .15s, color .15s, opacity .15s;
+  color: rgba(40, 30, 20, 0.55);
+  transition: background .35s cubic-bezier(.4,.0,.2,1),
+              color .25s ease,
+              box-shadow .35s ease;
 }
-.pill:hover { opacity: 1; }
+.pill:hover { color: rgba(40, 30, 20, 0.85); }
 .pill.pillActive {
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 1px 6px rgba(16, 15, 12, 0.10);
-  color: var(--ink);
-  opacity: 1;
+  color: #1a140f;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
+/* Desktop 30/70 split — left panel (utility: pills + terminal),
+   right panel (immersive cyclograph hero). Strict 100vh so nothing
+   triggers scroll. */
 .stage {
   flex: 1;
   display: flex;
   justify-content: center;
-  padding: 18px 32px 32px;
+  padding: 24px 32px;
   width: 100%;
   min-height: 0;
-  transition: background 700ms ease;
+  transition: background 1600ms cubic-bezier(0.4, 0.0, 0.2, 1);
   position: relative;
 }
 .stageInner {
+  display: grid;
+  grid-template-columns: minmax(280px, 30%) 1fr;
+  align-items: start;
+  gap: 32px;
+  width: 100%;
+  max-width: 1480px;
+  height: 100%;
+  min-height: 0;
+}
+.leftPanel {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: 18px;
+  min-width: 0;
+  align-self: center;
+}
+.leftPanel .pills { align-self: flex-start; }
+.rightPanel {
+  position: relative;
   width: 100%;
-  max-width: 1100px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  /* Confine the wheel area so it can't drift beyond the right column.
+     Top/bottom inset is equal regardless of screen height — wheel stays
+     vertically centered with consistent breathing room. */
+  overflow: visible;
+  padding: 5vh 0;
+  box-sizing: border-box;
 }
 .wheelHolder {
   position: relative;
-  width: 100%;
-  max-width: 720px;
+  width: min(100%, 55vh);
+  max-width: 620px;
   aspect-ratio: 1 / 1;
-  max-height: calc(100dvh - 360px);
+  max-height: 55vh;
   isolation: isolate;
+  margin: 0 auto;
+}
+/* Breathing aura — sized to encompass ALL rings AND the buffer gap before
+   the month labels. ~92% of the canvas so the outermost ring sits inside
+   the disc; only the perimeter month text sits outside it. Stronger
+   frosting (0.23) + more pronounced wobble so the breath is visible. */
+/* Aura: ~84% of canvas (8% inset). Rings live inside it (canvas
+   outerCap = 36% radius), month labels live outside it (canvas labelR =
+   46% radius), so there is always a visible frosted buffer between the
+   two and the breathing is unmissable. */
+.wheelAura {
+  position: absolute;
+  top: 8%; left: 8%; right: 8%; bottom: 8%;
+  background: rgba(255, 255, 255, 0.26);
+  backdrop-filter: blur(32px) saturate(1.5);
+  -webkit-backdrop-filter: blur(32px) saturate(1.5);
+  pointer-events: none;
+  z-index: 0;
+  /* Wobbly hand-drawn edge via SVG clip-path defined in Bloom.jsx */
+  clip-path: url(#auraWobblyClip);
+  -webkit-clip-path: url(#auraWobblyClip);
+  animation: wheelAuraBreath 6.5s ease-in-out infinite;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+}
+@keyframes wheelAuraBreath {
+  0%, 100% { transform: scale(1.000) rotate(0deg);    opacity: 0.92; }
+  25%      { transform: scale(1.035) rotate(1.4deg);  opacity: 1.00; }
+  50%      { transform: scale(1.055) rotate(-1deg);   opacity: 1.00; }
+  75%      { transform: scale(1.030) rotate(-1.8deg); opacity: 0.96; }
 }
 .wheelGlow {
   position: absolute;
   inset: -18%;
   z-index: 0;
   pointer-events: none;
-  transition: background 700ms ease;
+  transition: background 1600ms cubic-bezier(0.4, 0.0, 0.2, 1);
   filter: blur(22px);
   animation: glowBreath 10s ease-in-out infinite;
 }
@@ -133,81 +210,98 @@
 }
 
 /* Code-segment ticker — month/count on line one, species on line two */
+/* Developer Terminal — LIGHT frosted-glass matching the top pills.
+   Same rgba(255,255,255,0.45) base + 24px blur + 0.5 white perimeter so
+   the entire page reads as cut from one frosted-crystal material. */
 .ticker {
   width: 100%;
   max-width: 900px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   padding: 14px 18px;
-  border-radius: 10px;
-  font-family: 'JetBrains Mono', 'Space Mono', monospace;
+  border-radius: 14px;
+  font-family: 'Inter', system-ui, sans-serif;
   font-size: 12.5px;
-  color: var(--ink);
-  transition: background 350ms ease, box-shadow 350ms ease, border-color 350ms ease;
-  border: 1px solid transparent;
-}
-.tickerAuto {
+  color: #1A1523;
+  transition: background 600ms ease, box-shadow 600ms ease;
+  border: 1px solid rgba(255, 255, 255, 0.35);
   background: rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-color: rgba(16, 15, 12, 0.08);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  box-shadow:
+    0 6px 22px rgba(0, 0, 0, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
+.tickerAuto {}
 .tickerPaused {
-  background: rgba(255, 255, 255, 0.94);
-  border-color: rgba(16, 15, 12, 0.12);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.10);
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 .tickerHeader {
   display: flex; align-items: center; gap: 8px;
-  font-family: 'Space Mono', monospace;
+  font-family: 'Inter', system-ui, sans-serif;
   font-size: 12.5px;
 }
 .tickerPrompt {
-  color: #4A7C59; /* green prompt */
+  color: #1E2C22;
   font-weight: 700;
 }
 .tickerCmd {
-  color: var(--ink);
+  color: #1A1523;
 }
 .tickerCount {
-  color: var(--muted);
+  color: rgba(26, 21, 35, 0.65);
   font-style: italic;
   margin-left: 4px;
 }
 .tickerNames {
-  display: flex; flex-wrap: wrap; gap: 6px 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 6px 18px;
   align-items: baseline;
   padding-left: 18px;
-  font-family: 'Space Mono', monospace;
+  font-family: 'Inter', system-ui, sans-serif;
 }
+/* Botanical tag — matches the player UI's tree-chip layout exactly:
+   colored round dot with a thin white ring, then species name. The mono
+   KEY prefix stays as a small subtitle for the terminal's data feel. */
 .tickerName {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 12px;
+  display: inline-flex; align-items: center; gap: 9px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  color: #1A1523;
   opacity: 0;
   animation: tickerIn 380ms ease-out forwards;
 }
 .tickerDot {
-  width: 7px; height: 7px; border-radius: 1px;
+  width: 9px; height: 9px; border-radius: 50%;
   display: inline-block;
+  box-shadow: 0 0 0 1px rgba(26, 21, 35, 0.25);
+  flex: 0 0 auto;
 }
 .tickerKey {
-  color: var(--muted);
+  font-family: 'Inter', system-ui, sans-serif;
+  color: rgba(26, 21, 35, 0.65);
   letter-spacing: 0.10em;
   font-size: 10.5px;
+  margin-right: 4px;
 }
-.tickerEq { color: var(--muted); }
+.tickerEq { display: none; }
 .tickerEmpty {
-  font-family: 'Space Mono', monospace;
-  color: var(--muted);
+  font-family: 'Inter', system-ui, sans-serif;
+  color: rgba(26, 21, 35, 0.65);
   font-size: 12px;
   opacity: 0; animation: tickerIn 380ms ease-out forwards;
 }
 .tickerCursor {
-  font-family: 'Space Mono', monospace;
-  color: var(--ink);
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #1A1523;
   margin-left: auto;
-  opacity: 0.6;
+  opacity: 0.8;
   animation: blink 1.05s steps(2, end) infinite;
 }
 .tickerClose {
@@ -318,21 +412,51 @@
 }
 
 @media (max-width: 820px) {
+  /* Drop the desktop strict-viewport on mobile — content stacks and scrolls */
+  .main { max-height: none; overflow: visible; }
   .header { padding: 14px 18px 2px; }
   .eyebrow { font-size: 10.5px; letter-spacing: 0.20em; margin-bottom: 4px; }
   .title { font-size: 28px; line-height: 1.05; margin-bottom: 8px; }
   .subtext { font-size: 13.5px; line-height: 1.45; }
-  .pills { padding: 4px; gap: 4px; }
   .pill { padding: 6px 12px; font-size: 12px; }
-  .stage { padding: 8px 18px 22px; }
+  .stage { padding: 10px 14px 14px; }
   .stageInner {
-    grid-template-columns: 1fr;
-    gap: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    height: auto;
   }
-  .wheelHolder {
-    max-height: 60vh;
+  /* Break the leftPanel wrapper out of the layout so pills and ticker
+     can sit independently above and below the wheel. */
+  .leftPanel {
+    display: contents;
+  }
+  .pills {
+    order: 1;
+    align-self: center !important;
+    margin: 0 auto;
+  }
+  .rightPanel {
+    order: 2;
     width: 100%;
+    height: auto;
+    overflow: visible;
+    /* Cap the wheel area so it never overlaps pills above or ticker below */
+    flex: 0 0 auto;
+  }
+  .ticker { order: 3; align-self: stretch; padding: 10px 14px; }
+  /* Calm the breathing on mobile — keep the wobbly clip but stop the rotation */
+  .wheelAura { animation: none; }
+  .wheelHolder {
+    width: min(94vw, 56vh);
+    max-width: 480px;
+    max-height: 56vh;
+    margin: 0 auto;
   }
   .monthInfo { padding: 14px 14px 12px; }
   .monthInfoTitle { font-size: 22px; }
+  /* Force 2-column species grid on mobile for readability */
+  .tickerNames { grid-template-columns: 1fr 1fr; gap: 6px 12px; }
+  .tickerName { font-size: 11px; }
 }

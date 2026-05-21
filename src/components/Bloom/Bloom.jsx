@@ -3,8 +3,34 @@ import styles from './Bloom.module.css';
 import { SPECIES, ARCHITECTS, MONTHS, MONTH_START, MONTH_END } from './data.js';
 import OrganicWheel from './OrganicWheel.jsx';
 
+// Pre-compute a hand-drawn wobbly circle path (in a 100x100 viewBox) so the
+// aura's edge reads as ink-on-paper rather than a CAD circle. Scalloped via
+// two superimposed sine waves; static path is fine — the aura still breathes
+// via CSS scale.
+const WOBBLY_AURA_PATH = (() => {
+  const cx = 50, cy = 50, r = 50;
+  const steps = 240;
+  const ampMain = 0.9;   // softened scallop depth
+  const ampFine = 0.25;  // very subtle quiver
+  const freqMain = 7;    // fewer, broader undulations (was 14 — gear-like)
+  const freqFine = 17;
+  const phaseA = 0.7, phaseB = 2.1;
+  let d = '';
+  for (let i = 0; i <= steps; i++) {
+    const a = (i / steps) * Math.PI * 2;
+    const wob =
+      Math.sin(a * freqMain + phaseA) * ampMain +
+      Math.sin(a * freqFine + phaseB) * ampFine;
+    const rr = r + wob;
+    const x = cx + Math.cos(a) * rr;
+    const y = cy + Math.sin(a) * rr;
+    d += (i === 0 ? 'M' : 'L') + x.toFixed(2) + ',' + y.toFixed(2) + ' ';
+  }
+  return d + 'Z';
+})();
+
 const PAGE_ARCHITECTS = ARCHITECTS.filter(
-  (a) => a.id === 'krumbiegel' || a.id === 'sackville-west' || a.id === 'oudolf'
+  (a) => a.id === 'krumbiegel' || a.id === 'oudolf'
 );
 
 function bloomsInMonth(sp, m) {
@@ -52,8 +78,6 @@ function TickerStrip({ mode, monthIdx, species, onResume }) {
           blooming.map((s, i) => (
             <span key={s.id} className={styles.tickerName} style={{ animationDelay: `${i * 90}ms` }}>
               <span className={styles.tickerDot} style={{ background: s.color }} aria-hidden="true" />
-              <span className={styles.tickerKey}>{s.code || s.id.toUpperCase()}</span>
-              <span className={styles.tickerEq}>:</span>
               {s.common}
             </span>
           ))
@@ -138,36 +162,61 @@ export default function Bloom() {
       <section className={`${styles.header} bloom-header`}>
         <p className="vs-num">Bloom Calendar</p>
         <h1 className="vs-title">The year-long ritusamhara</h1>
-        <p className="vs-desc">The handoff of colors across the year-long cycle.</p>
+        <p className="vs-desc">
+          The continuous, overlapping handoff of seasonal color.
+          Tracking a century-old symphony of the city's streets in serial bloom.
+        </p>
       </section>
 
       <section className={styles.stage} style={{ background: stageBg }}>
         <div className={styles.stageInner}>
-          <nav className={styles.pills} aria-label="Garden philosophies">
-            {PAGE_ARCHITECTS.map((a) => (
-              <button
-                key={a.id}
-                type="button"
-                className={`${styles.pill} ${architect === a.id ? styles.pillActive : ''}`}
-                onClick={() => { setArchitect(a.id); setMonth(0); setMode('auto'); }}
-              >
-                {a.name.split(' ').slice(-1)[0]}
-              </button>
-            ))}
-          </nav>
-          <div className={styles.wheelHolder}>
-            <OrganicWheel
+          <aside className={styles.leftPanel}>
+            <nav
+              className={styles.pills}
+              aria-label="Garden philosophies"
+              style={{ '--pill-idx': PAGE_ARCHITECTS.findIndex((a) => a.id === architect) }}
+            >
+              <span className={styles.pillThumb} aria-hidden="true" />
+              {PAGE_ARCHITECTS.map((a) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  className={`${styles.pill} ${architect === a.id ? styles.pillActive : ''}`}
+                  onClick={() => { setArchitect(a.id); setMonth(0); setMode('auto'); }}
+                >
+                  {a.name.split(' ').slice(-1)[0]}
+                </button>
+              ))}
+            </nav>
+            <TickerStrip
+              mode={mode}
+              monthIdx={month}
               species={species}
-              selectedMonth={month}
-              onPickMonth={(m) => { setMode('paused'); setMonth(m); }}
+              onResume={() => setMode('auto')}
             />
+          </aside>
+          <div className={styles.rightPanel}>
+            <div className={styles.wheelHolder}>
+              <svg
+                width="0"
+                height="0"
+                style={{ position: 'absolute' }}
+                aria-hidden="true"
+              >
+                <defs>
+                  <clipPath id="auraWobblyClip" clipPathUnits="objectBoundingBox">
+                    <path d={WOBBLY_AURA_PATH} transform="scale(0.01)" />
+                  </clipPath>
+                </defs>
+              </svg>
+              <div className={styles.wheelAura} aria-hidden="true" />
+              <OrganicWheel
+                species={species}
+                selectedMonth={month}
+                onPickMonth={(m) => { setMode('paused'); setMonth(m); }}
+              />
+            </div>
           </div>
-          <TickerStrip
-            mode={mode}
-            monthIdx={month}
-            species={species}
-            onResume={() => setMode('auto')}
-          />
         </div>
       </section>
     </main>

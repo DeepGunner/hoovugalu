@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import * as Tone from 'tone';
 import { SP, M_LONG, hexRgb } from '../data/bloom.js';
+import { createAmbience } from '../data/ambience.js';
 
 export default function Viz01Soundscape({ isActive = true }) {
   const cvRef = useRef(null);
@@ -226,16 +227,23 @@ void main(){
       SCTX.fillRect(0, 0, W, H);
 
       const blooms = bloomingThisMonth(activeM);
-      blooms.slice(0, 3).forEach((entry, i) => {
+      // Render weakest → strongest so the dominant species sits on top and
+      // its hue isn't muddied by multiply-blended weaker layers.
+      const renderOrder = blooms.slice(0, 3).reverse();
+      renderOrder.forEach((entry, i) => {
         const { rgb: c, b } = entry;
         const intensity = b / 100;
+        // Strongest species (last drawn) uses source-over for clean colour;
+        // earlier layers use multiply for watercolor depth.
+        SCTX.globalCompositeOperation = i === renderOrder.length - 1 ? 'source-over' : 'multiply';
         const phase = i * 2.1 + activeM * 0.5;
         const bx = W * (0.25 + 0.5 * _sn(t * 0.3 + i * 3.1, phase));
         const by = H * (0.3 + 0.4 * _sn(phase, t * 0.25 + i * 2.7));
         const rad = Math.max(W, H) * (0.4 + intensity * 0.25);
         const grad = SCTX.createRadialGradient(bx, by, 0, bx, by, rad);
-        grad.addColorStop(0, `rgba(${c.r},${c.g},${c.b},${(intensity * 0.95).toFixed(3)})`);
-        grad.addColorStop(0.5, `rgba(${c.r},${c.g},${c.b},${(intensity * 0.55).toFixed(3)})`);
+        const peakA = i === renderOrder.length - 1 ? intensity * 0.85 : intensity * 0.5;
+        grad.addColorStop(0, `rgba(${c.r},${c.g},${c.b},${peakA.toFixed(3)})`);
+        grad.addColorStop(0.5, `rgba(${c.r},${c.g},${c.b},${(peakA * 0.55).toFixed(3)})`);
         grad.addColorStop(1, `rgba(${c.r},${c.g},${c.b},0)`);
         SCTX.fillStyle = grad;
         SCTX.fillRect(0, 0, W, H);
@@ -315,6 +323,7 @@ void main(){
 
     // Audio
     let audioReady = false, blossomSynth, droneSynth, reverb, soundLoop;
+    let ambience = null;
     let currentSeason = null;
     const SCALES = {
       spring: ['E4', 'F#4', 'A4', 'B4', 'C#5', 'E5', 'F#5', 'A5'],
@@ -349,6 +358,8 @@ void main(){
         envelope: { attack: 6, decay: 0, sustain: 1, release: 10 },
         volume: -28,
       }).connect(reverb);
+      ambience = createAmbience(reverb);
+      ambience.setMonth(activeM);
       audioReady = true;
     }
     function startSoundscape(hlM) {
@@ -374,6 +385,7 @@ void main(){
       }, '2n');
       soundLoop.start(0);
       Tone.Transport.start();
+      if (ambience) ambience.start();
     }
 
     let isPlaying = false, firstTouch = false;
@@ -399,6 +411,7 @@ void main(){
           Tone.Transport.pause();
           droneSynth.releaseAll(Tone.now() + 0.5);
           currentSeason = null;
+          if (ambience) ambience.stop();
         }
         setPlayState(false);
       } else {
@@ -437,16 +450,27 @@ void main(){
 
     function update(m) {
       activeM = m;
+      // Sync the slider fill split with the thumb position
+      try { sl.style.setProperty('--slider-pct', (m / 11 * 100) + '%'); } catch (e) {}
       moLbl.textContent = M_LONG[m];
       const nonSlv = SP.filter((s) => s.id !== 'SLV');
       const active = nonSlv.filter((s) => s.bloom[m] > 20);
-      spLbl.textContent = active.length > 1 ? 'SLV + ' + active.map((s) => s.id).join(' · ')
-        : active.length === 1 ? `SLV + ${active[0].id} — ${active[0].name}`
-          : 'SLV — Silver Oak only';
+      // Build a chip per blooming tree (colored dot + name). Render two
+      // identical copies so the mobile marquee animation can loop seamlessly
+      // by translating -50% of the doubled width.
+      const slv = SP[0]; // Silver Oak always present
+      const trees = [slv, ...active];
+      const chipsHTML = trees.map((s) =>
+        `<span class="r-sp-chip"><span class="r-sp-dot" style="background:${s.c}"></span>${s.name}</span>`
+      ).join('<span class="r-sp-sep">·</span>');
+      spLbl.innerHTML =
+        `<span class="r-sp-inner">${chipsHTML}</span>` +
+        `<span class="r-sp-inner" aria-hidden="true">${chipsHTML}</span>`;
       setTargets(m);
       highlightTick(m);
       buildLegend(m);
       if (audioReady && isPlaying) startSoundscape(m);
+      if (ambience) ambience.setMonth(m);
     }
 
     initGL();
@@ -464,6 +488,7 @@ void main(){
           Tone.Transport.pause();
           droneSynth.releaseAll(Tone.now() + 0.3);
           currentSeason = null;
+          if (ambience) ambience.stop();
         } catch (e) { /* ignore */ }
       }
     }
@@ -503,6 +528,7 @@ void main(){
       window.removeEventListener('resize', onResize);
       tickHandlers.forEach(({ el, h }) => el.removeEventListener('click', h));
       try {
+        if (ambience) { ambience.dispose(); ambience = null; }
         if (soundLoop) soundLoop.dispose();
         if (Tone.Transport) Tone.Transport.stop();
         if (droneSynth) droneSynth.dispose();
@@ -529,23 +555,25 @@ void main(){
       <div className="vs-frame">
         <div className="canvas-slot">
           <canvas id="relay-cv" ref={cvRef} style={{ display: 'block' }} aria-label="Stratigraphic waveform" />
-          <div className="r-info">
-            <button id="r-play" className="play-btn" ref={playBtnRef} aria-label="Play music" title="Play / Pause">
-              <svg id="r-play-icon" ref={playIconRef} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <polygon points="6,3 20,12 6,21" fill="currentColor" />
-              </svg>
-            </button>
-            <span className="r-mo" id="r-mo" ref={moLblRef}></span>
-            <span className="r-sp" id="r-sp" ref={spLblRef}></span>
+          <div className="player-card" role="group" aria-label="Soundscape player">
+            <div className="r-info">
+              <button id="r-play" className="play-btn" ref={playBtnRef} aria-label="Play music" title="Play / Pause">
+                <svg id="r-play-icon" ref={playIconRef} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <polygon points="6,3 20,12 6,21" fill="currentColor" />
+                </svg>
+              </button>
+              <span className="r-mo" id="r-mo" ref={moLblRef}></span>
+              <span className="r-sp" id="r-sp" ref={spLblRef}></span>
+            </div>
+            <div className="ctrl-row">
+              <input type="range" id="r-sl" ref={slRef} min="0" max="11" defaultValue="2" step="1" />
+            </div>
+            <div className="mo-ticks" id="r-ticks" ref={ticksRef}>
+              {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map((m, i) => (
+                <span key={m} style={{ '--mi': i }}>{m}</span>
+              ))}
+            </div>
           </div>
-        </div>
-        <div className="ctrl-row">
-          <input type="range" id="r-sl" ref={slRef} min="0" max="11" defaultValue="2" step="1" />
-        </div>
-        <div className="mo-ticks" id="r-ticks" ref={ticksRef}>
-          <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span>
-          <span>May</span><span>Jun</span><span>Jul</span><span>Aug</span>
-          <span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span>
         </div>
         <div className="tree-legend" id="tree-legend" ref={legendRef}></div>
       </div>

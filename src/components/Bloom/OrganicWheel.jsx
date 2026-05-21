@@ -19,6 +19,10 @@ export default function OrganicWheel({
   const selectedRef = useRef(selectedMonth);
   const hoveredRef = useRef(hoveredMonth);
   const rafRef = useRef(0);
+  // Pointer animated angle (radians) — separate from focus, allows magnetic-snap
+  const pointerAngleRef = useRef(-Math.PI / 2);
+  const pointerTargetRef = useRef(-Math.PI / 2);
+  const pointerVelocityRef = useRef(0);
 
   useEffect(() => { speciesRef.current = species; }, [species]);
   useEffect(() => { selectedRef.current = selectedMonth; }, [selectedMonth]);
@@ -94,23 +98,42 @@ export default function OrganicWheel({
 
     // Draw one species ring. Sectors within bloom windows get coloured;
     // everything else stays a faint neutral so the ring is still visible.
-    function drawRing(cx, cy, rMid, thickness, ringSpace, sp, t, idx, focus) {
+    function drawRing(cx, cy, rMid, thickness, ringSpace, sp, t, idx, mode) {
       const SEGS = 144;
-      const isFocused = focus != null;
-      const baseTickAlpha = isFocused ? 0.12 : 0.18;
+      // 'idle' = no focus, balanced; 'muted' = baseline 30-40% behind the
+      // spotlight; 'full' = vivid 100% inside the conical lens.
+      const ALPHAS = {
+        idle:  { fill: 0.68, color: 0.88, tick: 0.18, contour: 0.22 },
+        // Inactive (outside wedge): faint cream base so ring paths read,
+        // bloom arcs survive at ~55% so the calendar map is legible.
+        muted: { fill: 0.12, color: 0.65, tick: 0.04, contour: 0.12 },
+        // Inside the wedge: rings WITHOUT a bloom arc for this month fade
+        // almost to nothing (fill 0.0, contour 0.05); coloured arcs that
+        // ARE active jump to full saturation and own the visual field.
+        full:  { fill: 0.00, color: 1.00, tick: 0.10, contour: 0.05 },
+      };
+      const a = ALPHAS[mode] || ALPHAS.idle;
       const baseFill = '#F8F5EE';
 
       // Subtle breathing wobble — same for whole ring so it stays circular
       const wobble =
         Math.sin(t * 0.0004 + idx * 0.7) * (thickness * 0.10) +
         Math.sin(t * 0.00027 + idx * 1.4) * (thickness * 0.06);
-      const rOuter = rMid + thickness / 2 + wobble * 0.5;
-      const rInner = rMid - thickness / 2 + wobble * 0.5;
+      // Rings stay at the SAME rMid in every mode — only halfT changes.
+      // Outside the wedge: halfT = 28% of slot (56% fill → slim track look).
+      // Inside the wedge:  halfT = 44% of slot (88% fill → fat band) leaving
+      // 12% slot whitespace = 6% per edge clear of the neighbour ring.
+      // Inside-vs-outside thickness ratio = 0.44 / 0.28 ≈ 1.57× (~57% bigger).
+      const halfT = mode === 'full' ? ringSpace * 0.44 : ringSpace * 0.28;
+      const rOuter = rMid + halfT + wobble * 0.5;
+      const rInner = rMid - halfT + wobble * 0.5;
       // Hand-drawn jitter — capped so the wobble stays within the ring's
       // slot. Max swing per edge ~16% of ringSpace; combined ~32% leaves
       // a comfortable gap to the next ring.
-      const jitterOuter = ringSpace * 0.16;
-      const jitterInner = ringSpace * 0.12;
+      // Tighter jitter now that each ring is 78% of its slot — keeps the
+      // hand-drawn wobble visible without bleeding into adjacent rings.
+      const jitterOuter = ringSpace * 0.08;
+      const jitterInner = ringSpace * 0.06;
 
       // Faint neutral ring base (everywhere) so the ring path stays visible
       // — outer warped loop CW, inner warped loop CCW, even-odd fill carves
@@ -134,18 +157,14 @@ export default function OrganicWheel({
         ctx.lineTo(x, y);
       }
       ctx.closePath();
-      ctx.fillStyle = hexA(baseFill, isFocused ? 0.52 : 0.68);
+      ctx.fillStyle = hexA(baseFill, a.fill);
       ctx.fill('evenodd');
 
-      // Coloured bloom-window sectors. Only windows that contain the focused
-      // month get full opacity; everything else is muted ~30%.
+      // Coloured bloom-window sectors. Alpha comes from the global mode;
+      // the spotlight effect is achieved by clipping the FULL pass to the
+      // wedge sector, not by per-window logic.
       if (sp.windows) {
         sp.windows.forEach((win) => {
-          const winActive = isFocused && (() => {
-            const startD = focus * 30.4167;
-            const endD = (focus + 1) * 30.4167 - 1;
-            return endD >= win.start && startD <= win.end;
-          })();
           const a0 = (win.start / 365) * Math.PI * 2 - Math.PI / 2;
           let a1 = (win.end / 365) * Math.PI * 2 - Math.PI / 2;
           if (a1 < a0) a1 += Math.PI * 2;
@@ -172,12 +191,7 @@ export default function OrganicWheel({
           }
           ctx.closePath();
 
-          // Gradient along the wedge fades by intensity from low to peak
-          const gradAlpha = isFocused ? (winActive ? 1 : 0.22) : 0.88;
-          // Use angle-aware fill via per-tick intensity (drawn as small wedges)
-          // For simplicity here we do a flat colour at the window-average
-          // intensity then layer brighter on the peak portion.
-          ctx.fillStyle = hexA(sp.color, gradAlpha * 0.75);
+          ctx.fillStyle = hexA(sp.color, a.color * 0.75);
           ctx.fill();
 
           // Brighter overlay at peak portion
@@ -204,7 +218,7 @@ export default function OrganicWheel({
             ctx.lineTo(x, y);
           }
           ctx.closePath();
-          ctx.fillStyle = hexA(sp.color, gradAlpha);
+          ctx.fillStyle = hexA(sp.color, a.color);
           ctx.fill();
         });
       }
@@ -212,7 +226,7 @@ export default function OrganicWheel({
       // Subdivision tick texture — short radial lines across the ring at
       // regular angular intervals, following the hand-drawn boundary.
       const TICK_COUNT = 240;
-      ctx.strokeStyle = hexA('#100F0C', baseTickAlpha);
+      ctx.strokeStyle = hexA('#100F0C', a.tick);
       ctx.lineWidth = 0.5;
       ctx.beginPath();
       for (let i = 0; i < TICK_COUNT; i++) {
@@ -225,7 +239,7 @@ export default function OrganicWheel({
       ctx.stroke();
 
       // Outer hand-drawn contour
-      ctx.strokeStyle = hexA('#100F0C', isFocused ? 0.16 : 0.22);
+      ctx.strokeStyle = hexA('#100F0C', a.contour);
       ctx.lineWidth = 0.6;
       ctx.beginPath();
       for (let i = 0; i <= SEGS; i++) {
@@ -267,64 +281,212 @@ export default function OrganicWheel({
       const evergreen = sp.find((s) => s.role === 'Permanent Canopy');
       const flowering = sp.filter((s) => s.role !== 'Permanent Canopy');
 
-      const outerCap = minDim * 0.44;
-      const innerCore = minDim * 0.10;
+      // Rings fit inside the aura disc (aura radius ≈ 42% of canvas):
+      // outerCap = 36% pulls the outermost ring well inside the aura.
+      const outerCap = minDim * 0.36;
+      // Smaller core reclaims whitespace from the centre for ring real estate
+      const innerCore = minDim * 0.075;
       const ringCount = flowering.length + (evergreen ? 1 : 0);
       const ringSpace = (outerCap - innerCore) / Math.max(ringCount + 0.5, 1);
-      // Slim each ring so the wobble has room to swing without colliding
-      // into the neighbouring ring's slot.
-      const thickness = ringSpace * 0.55;
+      // Each ring now fills 78% of its slot (was 55%) — wider colour bands
+      // while still leaving a 22% gap so the hand-drawn wobble can swing
+      // without bleeding into the neighbouring ring.
+      const thickness = ringSpace * 0.78;
 
-      // Innermost core (calm)
+      // Calm inner core background
       ctx.fillStyle = '#F8F5EE';
       ctx.beginPath();
       ctx.arc(cx, cy, innerCore * 0.86, 0, Math.PI * 2);
       ctx.fill();
-      // Tiny center dot
-      ctx.fillStyle = 'rgba(40,30,20,0.7)';
-      ctx.beginPath();
-      ctx.arc(cx, cy, 3, 0, Math.PI * 2);
-      ctx.fill();
 
-      // Silver Oak — innermost continuous ring (always coloured)
-      if (evergreen) {
-        const rMid = innerCore + ringSpace * 0.5;
-        drawRing(cx, cy, rMid, thickness, ringSpace, evergreen, t, -1, focus);
-      }
 
-      // Flowering species rings outward
-      const offset = evergreen ? 1 : 0;
-      flowering.forEach((s, fi) => {
-        const idx = fi + offset;
-        const rMid = innerCore + ringSpace * (idx + 0.5);
-        drawRing(cx, cy, rMid, thickness, ringSpace, s, t, idx, focus);
-      });
+      // Draw all rings — when focused, use the "darkroom lens" technique:
+      // first pass paints everything muted, then we clip to the conical
+      // wedge and re-paint at full saturation underneath.
+      const baseMode = focus != null ? 'muted' : 'idle';
+      // Rings sit at the same rMid in every mode — only their thickness
+      // changes inside the wedge (handled inside drawRing via halfT).
+      const drawAllRings = (mode) => {
+        if (evergreen) {
+          const rMid = innerCore + ringSpace * 0.5;
+          drawRing(cx, cy, rMid, thickness, ringSpace, evergreen, t, -1, mode);
+        }
+        const offset = evergreen ? 1 : 0;
+        flowering.forEach((s, fi) => {
+          const idx = fi + offset;
+          const rMid = innerCore + ringSpace * (idx + 0.5);
+          drawRing(cx, cy, rMid, thickness, ringSpace, s, t, idx, mode);
+        });
+      };
+      drawAllRings(baseMode);
 
-      // Selected month wedge highlight (subtle radial wash)
+      // ── Conical focus lens with magnetic-snap animation ──
+      // The wedge spans exactly one month (30°) and reveals the rings under
+      // it at full saturation. Animate the centre angle toward the target
+      // with a spring step for the elastic-snap feel.
+      const targetAngle = focus != null
+        ? ((focus + 0.5) / 12) * Math.PI * 2 - Math.PI / 2
+        : pointerTargetRef.current;
+      pointerTargetRef.current = targetAngle;
+      let diff = targetAngle - pointerAngleRef.current;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      pointerVelocityRef.current += diff * 0.16; // stiffness
+      pointerVelocityRef.current *= 0.72;        // damping for slight overshoot
+      pointerAngleRef.current += pointerVelocityRef.current;
+      const pAng = pointerAngleRef.current;
+      // Slightly wider wedge (was 30°) — a touch more breathing room around
+      // the active month so the elevated lens reads as a deliberate magnifier.
+      const halfWedge = (Math.PI * 2) / 22;
+      // Wedge extends past labelR and is given a small 'lift' factor so the
+      // slice appears zoomed/elevated above the disc.
+      const wedgeLift = 1.06;
+      // Clamp so the wedge tip + its drop shadow stay inside the canvas
+      // (canvas half = 0.5*minDim, leave ~3% margin for the shadow blur).
+      // Bump clamp up to 0.495 so wedgeR comfortably exceeds labelR (0.46)
+      // PLUS the curved text's character height — active month sits fully
+      // inside the slice instead of poking out the top.
+      const wedgeR = Math.min(
+        Math.max(outerCap + ringSpace * 2.6, minDim * 0.495) * wedgeLift,
+        minDim * 0.495
+      );
+      const wedgeStart = pAng - halfWedge;
+      const wedgeEnd = pAng + halfWedge;
+
       if (focus != null) {
-        const a0 = (focus / 12) * Math.PI * 2 - Math.PI / 2;
-        const a1 = ((focus + 1) / 12) * Math.PI * 2 - Math.PI / 2;
-        ctx.fillStyle = 'rgba(40,30,20,0.06)';
+        // Elevation shadow — drawn as a filled wedge shape WITHOUT clipping
+        // first, so the soft drop-shadow projects outside the slice and
+        // visually lifts it forward off the disc.
+        ctx.save();
+        ctx.shadowColor = 'rgba(20,15,10,0.28)';
+        ctx.shadowBlur = 22;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 6;
+        ctx.fillStyle = 'rgba(252,248,240,0.38)';
         ctx.beginPath();
         ctx.moveTo(cx, cy);
-        ctx.arc(cx, cy, outerCap + ringSpace * 0.4, a0, a1);
+        ctx.arc(cx, cy, wedgeR, wedgeStart, wedgeEnd);
         ctx.closePath();
         ctx.fill();
+        ctx.restore();
+
+        // Illuminated frosted slice — light white frosted glass overlay.
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, wedgeR, wedgeStart, wedgeEnd);
+        ctx.closePath();
+        ctx.clip();
+        // Thick frosted backdrop INSIDE the wedge — a near-opaque milky
+        // surface so the coloured arcs that follow render on a bright stage
+        // and visibly pop against both the muted rings outside the wedge
+        // AND the gradient background. Stronger near the rim where the eye
+        // lands; slightly softer near the centre for refractive depth.
+        // Reduced ~30% from prior 0.55 → 0.39 so the elevation shadow can
+        // carry more of the lift and the colours read brighter through.
+        ctx.fillStyle = 'rgba(252,248,240,0.25)';
+        ctx.fillRect(cx - wedgeR, cy - wedgeR, wedgeR * 2, wedgeR * 2);
+        const wedgeSheen = ctx.createRadialGradient(cx, cy, innerCore * 0.3, cx, cy, wedgeR);
+        wedgeSheen.addColorStop(0, 'rgba(255,255,255,0.04)');
+        wedgeSheen.addColorStop(0.7, 'rgba(255,255,255,0.13)');
+        wedgeSheen.addColorStop(1, 'rgba(255,255,255,0.20)');
+        ctx.fillStyle = wedgeSheen;
+        ctx.fillRect(cx - wedgeR, cy - wedgeR, wedgeR * 2, wedgeR * 2);
+        // Spotlight pass — coloured bloom arcs at full saturation pop
+        // forward against the milky backdrop
+        drawAllRings('full');
+        ctx.restore();
+
+        // Wedge perimeter — micro-thin 1px white at 0.35 matching the
+        // illuminated edge of the top pill capsule and terminal box
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.lineWidth = 1;
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, wedgeR, wedgeStart, wedgeEnd);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.restore();
       }
 
-      // Month labels around the perimeter
-      const labelR = outerCap + ringSpace * 0.95;
-      ctx.textAlign = 'center';
+      // ── Month labels — wrapped along the circle (curved text) ──
+      // Inactive months sit OUTSIDE the wheel at labelR; the active month
+      // is pulled INSIDE the wedge's outer boundary so it reads as a tag
+      // on the frosted glass.
+      // Labels pinned to a canvas-relative radius (46% of minDim) so they
+      // always sit OUTSIDE the aura disc regardless of ring count.
+      const labelR = minDim * 0.46;
+      // Active label stays at the same perimeter radius as inactive months —
+      // the wedge has been widened to encompass it.
+      const activeLabelR = labelR;
       ctx.textBaseline = 'middle';
+      ctx.textAlign = 'center';
       MONTHS.forEach((mo, i) => {
-        const theta = ((i + 0.5) / 12) * Math.PI * 2 - Math.PI / 2;
-        const x = cx + Math.cos(theta) * labelR;
-        const y = cy + Math.sin(theta) * labelR;
+        const centerAng = ((i + 0.5) / 12) * Math.PI * 2 - Math.PI / 2;
         const isFocus = focus === i;
-        ctx.fillStyle = isFocus ? '#100F0C' : 'rgba(40,30,20,0.55)';
-        ctx.font = `${isFocus ? '700 ' : ''}11px "Space Mono", monospace`;
-        ctx.fillText(mo.toUpperCase(), x, y);
+        const text = mo.toUpperCase();
+        const r = isFocus ? activeLabelR : labelR;
+        ctx.font = isFocus
+          ? '700 13px Inter, system-ui, sans-serif'
+          : '500 11px Inter, system-ui, sans-serif';
+        ctx.fillStyle = isFocus ? '#100F0C' : 'rgba(40,30,20,0.35)';
+        // Stark white text — no shadow needed on the clear refractive glass
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        // Measure widths to compute total angular span
+        const widths = [];
+        let totalW = 0;
+        for (const ch of text) {
+          const w = ctx.measureText(ch).width;
+          widths.push(w);
+          totalW += w;
+        }
+        const totalAng = totalW / r;
+        // Bottom half of the wheel (angles between 0 and PI in screen coords)
+        // reads upside-down with the default tangent rotation, so flip it.
+        const isBottomHalf = Math.sin(centerAng) > 0;
+        const startAng = isBottomHalf
+          ? centerAng + totalAng / 2
+          : centerAng - totalAng / 2;
+        const sign = isBottomHalf ? -1 : 1;
+        let cursor = 0;
+        for (let k = 0; k < text.length; k++) {
+          const charAng = widths[k] / r;
+          const ang = startAng + sign * (cursor + charAng / 2);
+          cursor += charAng;
+          ctx.save();
+          ctx.translate(cx + Math.cos(ang) * r, cy + Math.sin(ang) * r);
+          ctx.rotate(ang + (isBottomHalf ? -Math.PI / 2 : Math.PI / 2));
+          ctx.fillText(text[k], 0, 0);
+          ctx.restore();
+        }
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
       });
+
+      // ── Central focal hub — liquid-glass circle with sharp white dot ──
+      const hubR = innerCore * 0.30;
+      ctx.save();
+      ctx.shadowColor = 'rgba(255,255,255,0.5)';
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = 'rgba(20,15,10,0.55)';
+      ctx.beginPath();
+      ctx.arc(cx, cy, hubR, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      // Inner highlight rim
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, hubR, 0, Math.PI * 2);
+      ctx.stroke();
+      // Sharp white dot dead center
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 2.5, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     function loop(now) {

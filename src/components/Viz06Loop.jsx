@@ -3,43 +3,71 @@ import * as Tone from 'tone';
 import { SP } from '../data/bloom.js';
 import { sceneImageUrl } from '../data/scene-image.js';
 
-/* Eight historical micro-cards drawn from public-domain Krumbiegel-era
-   Bangalore horticultural record. Each fires on one of the first eight
-   clicks on the mosaic in a randomised order. */
-const HISTORY_CARDS = [
-  { id: 'c1', year: 1908, tint: '#7A9E96',
-    title: 'The Serial Bloom Baseline',
-    body: 'Gustav Hermann Krumbiegel introduces bioaesthetic planning to organize Bangalore’s urban layout as an ecological canvas. By cataloging precise flowering windows, he establishes a master timeline to completely eliminate seasonal dead months.',
-    svg: 'gate' },
-  { id: 'c2', year: 1910, tint: '#C84878',
-    title: 'Sourcing the Pink Core',
-    body: 'Krumbiegel imports South American Tabebuia rosea seeds to begin extensive acclimatization trials within the Lalbagh nurseries. This step introduces the foundational pastel palette that would eventually evolve into the city’s iconic March landscape.',
-    svg: 'tree' },
-  { id: 'c3', year: 1912, tint: '#C89820',
-    title: 'Scaling the Botanical Palette',
-    body: 'The establishment of the Mysore Horticultural Society marks a shift toward community-driven tree planting. Distributing free saplings to citizens successfully expands the seasonal canopy from government boulevards into residential neighborhoods.',
-    svg: 'scroll' },
-  { id: 'c4', year: 1915, tint: '#6B55A0',
-    title: 'The Chromatic Contrast Accord',
-    body: 'Early avenue blueprints intentionally pair pink Tabebuia opposite deep blue-mauve Jacaranda trees along primary transit lines. Matching their precise blooming windows triggers a brilliant, simultaneous color conversation immortalized by mid-century artists.',
-    svg: 'avenue' },
-  { id: 'c5', year: 1920, tint: '#E6B800',
-    title: 'Cascading the Summer Gold',
-    body: 'The mass coordination of native Amaltas trees targets the volatile transition from spring heat to early monsoon. Its hanging yellow clusters create a golden curtain that smoothly shifts the city’s color profile without letting the calendar drop into darkness.',
-    svg: 'chain' },
-  { id: 'c6', year: 1928, tint: '#D03A18',
-    title: 'The Mid Year Flame Peak',
-    body: 'Massive configurations of Gulmohar trees are deployed across primary wide boulevards to cover the sweltering April and May gap. The resulting scarlet and flame-red explosion marks the highest saturation point on the entire annual calendar.',
-    svg: 'flame' },
-  { id: 'c7', year: 1935, tint: '#8A4898',
-    title: 'Preserving the Monsoon Palette',
-    body: 'The urban grid is reinforced with Pride of India trees to survive the heavy downpours of June through September. This resilient canopy locks steady purple and mauve tones into the landscape when softer blossoms would be stripped bare.',
-    svg: 'bell' },
-  { id: 'c8', year: 1952, tint: '#4A7C59',
+/* Per-tree cards keyed by species id. Clicking a pixel surfaces the card
+   for that month's DOMINANT tree — the city's chromatic chair-holder for
+   the season the cursor lands in. */
+const TREE_CARDS = {
+  SLV: {
+    id: 'SLV', name: 'Silver Oak', tint: '#7A9E96', image: '/SilverOak.png',
     title: 'The Structural Frame Constant',
-    body: 'Post-independence civic guidelines institutionalize the evergreen Silver Oak as a mandatory vertical backdrop for expanding sectors. This permanent deep-green wireframe ensures that the fluid, shifting watercolor blooms of other species always stand out in sharp relief.',
-    svg: 'oak' },
-];
+    window: 'JAN – DEC',
+    body: "Introduced from Australia, the Silver Oak functions as the architectural chassis of Krumbiegel's metropolitan design. Unlike the volatile blooming canopies, this evergreen giant holds a steady, structural deep-green backdrop year-round. It serves as a living, permanent stage — existing quietly in the background so that the theatrical, explosive color handoffs of the other nine species have a dark canvas to land against.",
+  },
+  ERY: {
+    id: 'ERY', name: 'Coral Tree', tint: '#C94028', image: '/CoralTree.png',
+    title: 'The Pre-Spring Ignition',
+    window: 'JAN · DEC',
+    body: 'Originating in the Indo-Pacific, the Coral Tree marks the definitive closing and opening of the seasonal loop. Arriving in January on completely bare branches, its bright scarlet claws erupt into the cold winter air. By clearing away its own leaves before blooming, it maximizes color visibility — shaking the city awake and initiating the first notes of the annual chromatic handoff.',
+  },
+  JAC: {
+    id: 'JAC', name: 'Jacaranda', tint: '#6B55A0', image: '/Jacaranda.png',
+    title: 'The Blue-Mauve Horizon',
+    window: 'FEB – APR',
+    body: "The absolute visual crown of the Spring season. Introduced from South America, the Jacaranda turns Bangalore's overhead canopy into an entirely blue-mauve ceiling across March. It alters the very light and acoustic density of the avenues. Millions walk underneath its violet carpet every year, experiencing a massive, synchronized color cloud that completely dominates the skyline for nearly five months.",
+  },
+  TAB: {
+    id: 'TAB', name: 'Pink Trumpet', tint: '#C84878', image: '/PinkTrumpet.png',
+    title: 'The Pastel Intertwine',
+    window: 'FEB · OCT – NOV',
+    body: 'Brought from Central America, the Pink Trumpet acts as a highly fluid transition element in the system. Erupting twice a year — first as a pastel partner to the gold of February, then returning as a soft cushion in November — its delicate pink blossoms soften the urban lines. It coordinates directly with the surrounding canopies to ensure the city is always mid-sentence.',
+  },
+  TYE: {
+    id: 'TYE', name: 'Tree of Gold', tint: '#E6B800', image: '/TreeOfGold.png',
+    title: 'The Architectural Traffic-Stopper',
+    window: 'FEB',
+    body: 'A South American native strategically planted to create maximum theatrical contrast. Exploding in February alongside the deep violet of the Jacaranda, the Tree of Gold acts as a sudden, structural burst of pure gold. It was deployed across specific avenues to manipulate the light, forcing the eye forward and transforming everyday public streets into a high-precision, living design gallery.',
+  },
+  AML: {
+    id: 'AML', name: 'Amaltas', tint: '#C89820', image: '/Amaltas.png',
+    title: 'The Native Golden Chandelier',
+    window: 'APR – MAY',
+    body: 'A deeply rooted South Asian native that defines the arrival of full summer. As April begins, the Amaltas drops its leaves to suspend massive, cascading chandeliers of pure golden blossoms. These native yellow curtains drape over the avenues, catching the intense pre-monsoon sunlight and cooling the street temperatures right before the fierce heat of May takes over.',
+  },
+  GUL: {
+    id: 'GUL', name: 'Gulmohur', tint: '#D03A18', image: '/Gulmohar.png',
+    title: 'The Summer Fountain of Flame',
+    window: 'APR – JUN',
+    body: "Hailing from Madagascar, the Gulmohur represents the peak intensity of the city's color cycle. Exploding in May, it blankets the overhead canopies in violent, fiery red fountains of flame. It behaves like a massive visual exclamation point at the end of summer, completely consuming the remaining golden light of the Amaltas before the monsoon rains arrive to wash the canvas clean.",
+  },
+  POI: {
+    id: 'POI', name: 'Pride of India', tint: '#8A4898', image: '/PrideOfIndia.png',
+    title: 'The Deep Monsoon Bridge',
+    window: 'JUN – SEP',
+    body: "A sturdy native species engineered to hold the city's aesthetic together during the heavy downpours of July. As the sky turns gray, the Pride of India erupts into rich purple-pink clusters. It ensures that even when the city's environment is dark and wet, the sequence never goes dark between seasons, holding a vibrant, rain-resistant bridge until autumn arrives.",
+  },
+  SPA: {
+    id: 'SPA', name: 'Scarlet Bell Tree', tint: '#C03818', image: '/ScarletBellTree.png',
+    title: 'The Ugandan Monsoon Sentinel',
+    window: 'AUG – OCT',
+    body: 'Brought from Uganda, the Scarlet Bell Tree acts as a critical autumn anchor from August through October. Its heavy, cup-shaped scarlet-orange bells open sequentially, capturing rainwater and holding a deep, fiery saturation against the wet monsoon greenery. It functions as a precise chronological pivot point, gradually handing the color scheme off as the purple tones fade out.',
+  },
+  PEL: {
+    id: 'PEL', name: 'Copper Pod', tint: '#C87820', image: '/CopperPod.png',
+    title: 'The Secondary Vistas Illumination',
+    window: 'SEP – NOV',
+    body: 'Spanning across South and Southeast Asia, the Copper Pod closes the late autumn loop in October. Lighting up entire urban vistas with its second flowering, it covers the streets in a deep, copper-yellow dust. This golden canopy interacts with the cooling year-end air, warming the visual landscape of the neighborhoods just as the pink trumpets prepare to return.',
+  },
+};
 
 function shuffled(arr) {
   const a = arr.slice();
@@ -136,7 +164,11 @@ export default function Viz06Loop({ isActive = true }) {
   const isActiveRef = useRef(isActive);
   const ctrlRef = useRef(null);
   const [card, setCard] = useState(null);
-  const orderRef = useRef(shuffled(HISTORY_CARDS));
+  // Active cell drives both the month-strip active letter and the spotlight
+  // dimming overlay drawn inside the animate loop.
+  const [activeCell, setActiveCell] = useState(null); // {yi, mi} | null
+  const activeCellRef = useRef(null);
+  useEffect(() => { activeCellRef.current = activeCell; }, [activeCell]);
   const clickCountRef = useRef(0);
   const lastCellRef = useRef({ yi: -1, mi: -1 });
   const cellCardRef = useRef(new Map()); // key "yi,mi" → card data (stable per pixel)
@@ -279,21 +311,8 @@ export default function Viz06Loop({ isActive = true }) {
         }
         ctx.restore();
       }
-      if (hasM && dispYear > 0) {
-        ctx.save();
-        ctx.font = "700 12px 'Space Mono',monospace";
-        const yr = String(dispYear);
-        const tw = ctx.measureText(yr).width;
-        const pw = tw + 22, ph = 24, pilX = mX - pw / 2, pilY = mY - 50;
-        ctx.fillStyle = 'rgba(38,32,26,.88)';
-        if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(pilX, pilY, pw, ph, ph / 2); ctx.fill(); }
-        else { ctx.fillRect(pilX, pilY, pw, ph); }
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = 'rgba(245,238,212,.96)';
-        ctx.fillText(yr, mX, pilY + ph / 2);
-        ctx.restore();
-      }
+      // Removed: black year pill on hover (the glass HUD chip handles the
+      // year/month/species readout, no need for a duplicate canvas pill).
       ctx.font = "9px 'Space Mono',monospace";
       ctx.fillStyle = 'rgba(38,32,26,.60)';
       ctx.textAlign = 'left';
@@ -302,12 +321,58 @@ export default function Viz06Loop({ isActive = true }) {
       ctx.textAlign = 'right';
       ctx.textBaseline = 'bottom';
       ctx.fillText('today · ' + NOW, W - 9, H - 7);
-      const mo = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
-      ctx.font = "7.5px 'Space Mono',monospace";
-      ctx.fillStyle = 'rgba(38,32,26,.45)';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      for (let m = 0; m < 12; m++) ctx.fillText(mo[m], Math.round((m + 0.5) * PCOLS / 12) * P + P / 2, 4);
+      // Month letters now rendered as an HTML strip above the canvas
+      // (with active-state styling driven by activeCellRef); no canvas text.
+
+      // ── Spotlight crosshair when a cell is active ──
+      // Dim every pixel except those on the active row OR active column;
+      // draw a thin frame around the active pixel itself.
+      const ac = activeCellRef.current;
+      if (ac) {
+        const colX = Math.floor(ac.mi * PCOLS / 12);
+        const colXEnd = Math.floor((ac.mi + 1) * PCOLS / 12);
+        // For each row band that maps to a year, find the row whose year
+        // matches ac.yi. Simpler: invert the row→yi mapping.
+        const targetRow = Math.round(ac.yi * (PROWS - 1) / Math.max(YEARS - 1, 1));
+        // Dim everything
+        ctx.fillStyle = 'rgba(250,250,248,0.60)';
+        ctx.fillRect(0, 0, W, H);
+        // Re-draw the crosshair: full active COLUMN + full active ROW at
+        // their true colours, zoomed 1.3× with a soft drop-shadow so the
+        // intercept timeline visibly elevates above the dimmed grid.
+        const ZOOM = 1.30;
+        const dz = ((P - 2) * ZOOM - (P - 2)) / 2; // centre offset
+        const drawElevated = (p) => {
+          ctx.save();
+          ctx.shadowColor = 'rgba(20,15,10,0.22)';
+          ctx.shadowBlur = 6;
+          ctx.shadowOffsetY = 2;
+          ctx.fillStyle = p.color;
+          ctx.fillRect(p.hx - dz, p.hy - dz, (P - 2) * ZOOM, (P - 2) * ZOOM);
+          ctx.restore();
+        };
+        // Column (vertical strip — the active month)
+        for (let row = 0; row < PROWS; row++) {
+          for (let col = colX; col < colXEnd; col++) {
+            const p = particles[row * PCOLS + col];
+            if (p) drawElevated(p);
+          }
+        }
+        // Row (horizontal strip — the active year)
+        for (let col = 0; col < PCOLS; col++) {
+          if (col >= colX && col < colXEnd) continue; // already drawn above
+          const p = particles[targetRow * PCOLS + col];
+          if (p) drawElevated(p);
+        }
+        // Crisp frame around the SINGLE intercept pixel (year × month) —
+        // makes the chosen point unmistakably specific within the crosshair.
+        const fx = Math.floor((colX + (colXEnd - colX) / 2)) * P + 1;
+        const fy = targetRow * P + 1;
+        const fs = (P - 2) * ZOOM;
+        ctx.strokeStyle = 'rgba(20,15,10,0.95)';
+        ctx.lineWidth = 1.8;
+        ctx.strokeRect(fx - dz - 1, fy - dz - 1, fs + 2, fs + 2);
+      }
       rafId = requestAnimationFrame(animate);
     }
     function startLoop() {
@@ -484,6 +549,17 @@ export default function Viz06Loop({ isActive = true }) {
     }
     const NOW2 = new Date().getFullYear(), YSPAN = NOW2 - 1908 + 1;
     let lastYear = -1, lastMonth = -1;
+    // Clamp the HUD pill's left position so it never overflows the canvas
+    // edges on mobile (where extreme-left / extreme-right pixels would push
+    // half the pill outside the viewport). Reads the pill's measured width
+    // and shifts it inward by whatever margin is missing on the closer side.
+    function clampHudX(desiredX) {
+      const half = hud.offsetWidth / 2 + 6;
+      const cw = canvas.clientWidth;
+      if (desiredX < half) return half;
+      if (desiredX > cw - half) return cw - half;
+      return desiredX;
+    }
     function onHudMove(e) {
       const rect = canvas.getBoundingClientRect();
       const rx = e.clientX - rect.left, ry = e.clientY - rect.top;
@@ -491,10 +567,29 @@ export default function Viz06Loop({ isActive = true }) {
       const mi = Math.min(11, Math.max(0, Math.floor((rx / fw) * 12)));
       const yi = Math.min(YSPAN - 1, Math.max(0, Math.round((ry / fh) * (YSPAN - 1))));
       const yr = pinnedYearRef.current != null ? pinnedYearRef.current : 1908 + yi;
+      // Always keep the HUD pill visible — when a card is open we pin it
+      // to the active pixel so the two read as one consistent label.
       hud.style.opacity = '1';
-      hud.style.left = rx + 'px';
-      hud.style.top = ry + 'px';
-      hud.textContent = `${yr}  ·  ${MO_FULL[mi].slice(0, 3)}  ·  ${dominantForMonth(mi)}`;
+      if (activeCellRef.current && cardPosRef.current) {
+        hud.style.top = cardPosRef.current.y + 'px';
+        // Set text first so offsetWidth is accurate, then clamp x.
+        const ac0 = activeCellRef.current;
+        const acYr0 = pinnedYearRef.current != null ? pinnedYearRef.current : 1908 + ac0.yi;
+        hud.textContent = `${acYr0}  ·  ${MO_FULL[ac0.mi].slice(0, 3)}  ·  ${dominantForMonth(ac0.mi)}`;
+        hud.style.left = clampHudX(cardPosRef.current.x) + 'px';
+        // If the card sits at the TOP (pixel in lower half), drop the pill
+        // BELOW the pixel; otherwise float it above as usual. Keeps the
+        // pill on the opposite side of the pixel from the card.
+        const cardAtTop = cardPosRef.current.y / (canvas.clientHeight || 1) > 0.5;
+        hud.style.transform = cardAtTop
+          ? 'translate(-50%, 30%)'
+          : 'translate(-50%, -130%)';
+      } else {
+        hud.style.top = ry + 'px';
+        hud.style.transform = 'translate(-50%, -130%)';
+        hud.textContent = `${yr}  ·  ${MO_FULL[mi].slice(0, 3)}  ·  ${dominantForMonth(mi)}`;
+        hud.style.left = clampHudX(rx) + 'px';
+      }
       // Dismiss the history card as soon as the cursor moves a meaningful
       // distance from where it was opened (so a click shows the card, the
       // next hover hides it).
@@ -506,6 +601,7 @@ export default function Viz06Loop({ isActive = true }) {
           pinnedYearRef.current = null;
           lastCellRef.current = { yi: -1, mi: -1 };
           setCard(null);
+          setActiveCell(null);
         }
       }
       if (yr !== lastYear || mi !== lastMonth) {
@@ -540,21 +636,39 @@ export default function Viz06Loop({ isActive = true }) {
       // (stable per pixel; same click always yields the same card)
       let data = cellCardRef.current.get(cellKey);
       if (!data) {
-        data = HISTORY_CARDS.reduce((best, c) =>
-          Math.abs(c.year - clickedYear) < Math.abs(best.year - clickedYear) ? c : best,
-          HISTORY_CARDS[0]
-        );
+        // Resolve THIS month's dominant FLOWERING tree (highest bloom value,
+        // excluding the structural Silver Oak — same logic the HUD pill uses
+        // so the two readouts always agree).
+        let bestSp = null, bestV = -1;
+        SP.forEach((sp) => {
+          if (sp.id === 'SLV') return;
+          if (sp.bloom[mi] > bestV) { bestV = sp.bloom[mi]; bestSp = sp; }
+        });
+        const tree = TREE_CARDS[bestSp?.id] || TREE_CARDS.SLV;
+        data = { ...tree, year: clickedYear };
         cellCardRef.current.set(cellKey, data);
       }
       pinnedYearRef.current = data.year;
-      hud.textContent = `${data.year}  ·  ${MO_FULL[mi].slice(0, 3)}  ·  ${dominantForMonth(mi)}`;
       cardPosRef.current = { x: rx, y: ry };
+      // Pin the pill to the active pixel immediately (no need to wait for
+      // the next mousemove) and align its text to the card's metadata.
+      hud.style.opacity = '1';
+      hud.style.top = ry + 'px';
+      const _cardAtTop = ry / (canvas.clientHeight || 1) > 0.5;
+      hud.style.transform = _cardAtTop
+        ? 'translate(-50%, 30%)'
+        : 'translate(-50%, -130%)';
+      // Set text BEFORE measuring/clamping so the offsetWidth is accurate.
+      hud.textContent = `${data.year}  ·  ${MO_FULL[mi].slice(0, 3)}  ·  ${dominantForMonth(mi)}`;
+      hud.style.left = clampHudX(rx) + 'px';
       setCard({
         ...data,
         key: `${data.id}-${cellKey}`,
         x: rx, y: ry,
         frameW: rect.width, frameH: rect.height,
+        mi,
       });
+      setActiveCell({ yi, mi });
     }
     canvas.addEventListener('click', onCellClick);
 
@@ -592,7 +706,8 @@ export default function Viz06Loop({ isActive = true }) {
       <div className="vs-num">Loop</div>
       <h2 className="vs-title">Playing since 1908.</h2>
       <p className="vs-desc">
-        118 years of the same calendar rendered as a pixel mosaic. Each column is a month, each row a year — coloured by that month's dominant blooming species.
+        The continuous, overlapping handoff of seasonal color.
+        Tracking a century-old symphony of public space in serial bloom.
       </p>
       <div
         className="vs-frame"
@@ -600,6 +715,49 @@ export default function Viz06Loop({ isActive = true }) {
         style={{ background: '#F9F9F6', padding: 0, position: 'relative', overflow: 'hidden' }}
       >
         <div className="canopy-strip"></div>
+        {/* Rigid month timeline header — single-letter J F M A M J J A S O N D,
+            12 equal columns flexed across, aligned to canvas columns.
+            Active letter (when a pixel is selected) lights up bold-italic with
+            an underline accent. */}
+        <div
+          className="loop-mo-strip"
+          aria-hidden="true"
+          style={{
+            display: 'flex',
+            width: '100%',
+            padding: '8px 0 6px',
+            background: 'transparent',
+            position: 'relative',
+            zIndex: 2,
+          }}
+        >
+          {['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'].map((m, i) => {
+            const isActive = activeCell && activeCell.mi === i;
+            return (
+              <span
+                key={i}
+                style={{
+                  flex: '1 1 0',
+                  textAlign: 'center',
+                  fontFamily: "'Inter', system-ui, sans-serif",
+                  fontSize: 'clamp(10px, 1.6vw, 13px)',
+                  letterSpacing: '0.08em',
+                  fontStyle: isActive ? 'italic' : 'normal',
+                  fontWeight: isActive ? 700 : 400,
+                  color: isActive ? '#1A140F' : 'rgba(26,20,15,0.35)',
+                  transform: isActive ? 'scale(1.18)' : 'scale(1)',
+                  textDecoration: isActive ? 'underline' : 'none',
+                  textUnderlineOffset: 4,
+                  textDecorationThickness: '1px',
+                  transition: 'color .22s ease, transform .22s ease, font-weight .22s ease',
+                  transformOrigin: 'center',
+                }}
+              >
+                {m}
+              </span>
+            );
+          })}
+        </div>
         <canvas
           id="loop-canvas"
           ref={canvasRef}
@@ -611,55 +769,109 @@ export default function Viz06Loop({ isActive = true }) {
           ref={badgeRef}
           style={{ display: 'none' }}
         />
+        {/* Unified story sheet — metadata + narrative welded into ONE card.
+            Slides up from the bottom of the viewport on click. */}
         {card && (() => {
           const c = card;
-          const cardW = 300;
-          const estH = 220;
-          const px = Math.min(Math.max(c.x + 18, 12), c.frameW - cardW - 12);
-          const py = Math.min(Math.max(c.y + 18, 12), c.frameH - estH - 12);
+          const MO_FULL = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+          // Anchor the card to whichever half of the frame DOESN'T contain
+          // the active pixel — guarantees the elevated pixel + its crosshair
+          // stay visible. 50% split so the card never lands on top of the
+          // tapped point.
+          const stickTop = c.y / c.frameH > 0.5;
+          const animName = stickTop ? 'loopCardDropDown' : 'loopCardSlideUp';
+          // When the card is anchored to the top, push it ~44px down so it
+          // clears the JAN-DEC month strip that lives above the canvas, and
+          // cap its height so the bottom never spills past the visualisation.
+          const posStyle = stickTop
+            ? { top: 48, maxHeight: 'calc(100% - 64px)', overflowY: 'auto' }
+            : { bottom: 18, maxHeight: 'calc(100% - 32px)', overflowY: 'auto' };
           return (
             <article
               key={c.key}
               style={{
                 position: 'absolute',
-                left: px, top: py,
-                width: cardW,
-                background: 'rgba(255,255,255,.42)',
-                backdropFilter: 'blur(14px)',
-                WebkitBackdropFilter: 'blur(14px)',
-                border: '1px solid rgba(255,255,255,.55)',
-                borderRadius: 22,
-                padding: 18,
-                boxShadow: '0 8px 28px rgba(0,0,0,.18)',
+                left: '50%',
+                ...posStyle,
+                transform: 'translateX(-50%)',
+                width: 'min(560px, calc(100% - 28px))',
+                background: 'rgba(255,255,255,0.65)',
+                backdropFilter: 'blur(24px) saturate(1.4)',
+                WebkitBackdropFilter: 'blur(24px) saturate(1.4)',
+                border: '1px solid rgba(255,255,255,0.40)',
+                borderRadius: 18,
+                padding: 0,
+                boxShadow: '0 18px 48px rgba(20,15,10,0.22)',
                 color: '#1A140F',
-                fontFamily: "'DM Sans', system-ui, sans-serif",
                 zIndex: 10,
-                animation: 'loopCardIn .28s ease-out both',
+                animation: `${animName} .42s cubic-bezier(0.16,1,0.3,1) both`,
               }}
             >
+              {/* Header row — tree image on the left, serif tree-name title
+                  on the right with a muted Space Mono data string below it. */}
               <div style={{
-                font: "700 10px 'Space Mono',monospace",
-                letterSpacing: '.24em',
-                color: c.tint, marginBottom: 6,
+                padding: '16px 20px 0',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 14,
               }}>
-                {c.year}
+                <img
+                  src={c.image}
+                  alt={c.name}
+                  style={{
+                    width: 56, height: 56,
+                    borderRadius: 10,
+                    objectFit: 'cover',
+                    flex: '0 0 auto',
+                    boxShadow: '0 2px 6px rgba(20,15,10,0.10)',
+                  }}
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                  <h4 style={{
+                    margin: 0,
+                    fontFamily: "'Cormorant Garamond', serif",
+                    fontStyle: 'italic',
+                    fontWeight: 700,
+                    fontSize: 24,
+                    lineHeight: 1.1,
+                    color: '#000000',
+                  }}>
+                    {c.name}
+                  </h4>
+                  <div style={{
+                    marginTop: 2, marginBottom: 0,
+                    fontFamily: "'Space Mono', monospace",
+                    fontSize: 12,
+                    fontWeight: 400,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.10em',
+                    color: 'rgba(26, 21, 35, 0.5)',
+                  }}>
+                    {c.year}&nbsp;&nbsp;//&nbsp;&nbsp;{c.window}
+                  </div>
+                </div>
               </div>
-              <h4 style={{
-                margin: '0 0 10px',
-                font: "italic 19px 'Cormorant Garamond',serif",
-                lineHeight: 1.18,
-                color: '#1A140F',
-              }}>
-                {c.title}
-              </h4>
-              <p style={{
-                margin: 0,
-                fontSize: 12,
-                lineHeight: 1.5,
-                color: '#3A3128',
-              }}>
-                {c.body}
-              </p>
+              {/* Micro-thin divider */}
+              <div style={{
+                height: 1,
+                background: 'rgba(26,20,15,0.08)',
+                margin: '14px 20px 0',
+              }} />
+              {/* Description body — pure serif, no marketing title. */}
+              <div style={{ padding: '14px 20px 18px' }}>
+                <p style={{
+                  margin: 0,
+                  fontFamily: "'Inter', system-ui, sans-serif",
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  fontSize: 15,
+                  lineHeight: 1.6,
+                  letterSpacing: 0,
+                  color: '#1A140F',
+                }}>
+                  {c.body}
+                </p>
+              </div>
             </article>
           );
         })()}

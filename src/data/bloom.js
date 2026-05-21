@@ -13,17 +13,21 @@ export const M_SHORT = [
 
 export const M_INIT = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
 
-/* Botanically accurate flowering-tree colours */
+/* Issar-verified palette — aligned with the Bloom Calendar species so each
+   month's dominant colour matches the city's actual succession. Bloom
+   intensities are tightened to each species' real peak window so no single
+   hue (e.g. pink) dominates months it shouldn't. */
 export const SP = [
-  { id: 'SLV', name: 'Silver Oak',     origin: 'Australia',       c: '#7A9E96', bloom: [65, 58, 52, 46, 38, 36, 38, 42, 42, 46, 52, 62] },
-  { id: 'ERY', name: 'Erythrina',      origin: 'India',           c: '#C94028', bloom: [88, 92, 62, 22,  8,  5,  5,  5,  5,  5, 15, 48] },
-  { id: 'JAC', name: 'Jacaranda',      origin: 'South America',   c: '#6B55A0', bloom: [ 8, 48, 90, 100, 52, 15, 5,  5,  5,  5,  5,  5] },
-  { id: 'TAB', name: 'Tabebuia',       origin: 'Central America', c: '#C84878', bloom: [ 5, 22, 82, 100, 32,  8, 5,  5,  5,  8, 78, 32] },
-  { id: 'AML', name: 'Amaltas',        origin: 'South Asia',      c: '#C89820', bloom: [ 5,  5, 12, 68, 100, 52, 18, 5,  5,  5,  5,  5] },
-  { id: 'GUL', name: 'Gulmohar',       origin: 'Madagascar',      c: '#D03A18', bloom: [ 5,  5,  8, 32, 80, 100, 65, 25,  8,  5,  5,  5] },
-  { id: 'POI', name: 'Pride of India', origin: 'India',           c: '#8A4898', bloom: [ 5,  5,  5,  5,  8, 38, 80, 100, 78, 45, 15, 5] },
-  { id: 'COL', name: 'Colvillea',      origin: 'East Africa',     c: '#C85020', bloom: [ 5,  5,  5,  5,  5,  8, 18, 58, 100, 88, 35, 8] },
-  { id: 'BAU', name: 'Bauhinia',       origin: 'East Asia',       c: '#A86885', bloom: [32, 15,  5,  5,  5,  5,  5,  5,  8, 18, 42, 82] },
+  { id: 'SLV', name: 'Silver Oak',     origin: 'Australia',       c: '#7A9E96', bloom: [50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50] },
+  { id: 'ERY', name: 'Coral Tree',     origin: 'Indo-Pacific',    c: '#C94028', bloom: [95, 30,  5,  5,  5,  5,  5,  5,  5,  5,  8, 70] },
+  { id: 'JAC', name: 'Jacaranda',      origin: 'South America',   c: '#6B55A0', bloom: [ 5, 40, 100, 60,  8,  5,  5,  5,  5,  5,  5,  5] },
+  { id: 'TAB', name: 'Pink Trumpet',   origin: 'Central America', c: '#C84878', bloom: [ 5, 90, 25,  5,  5,  5,  5,  5,  5, 55, 95, 30] },
+  { id: 'TYE', name: 'Tree of Gold',   origin: 'South America',   c: '#E6B800', bloom: [ 5, 95, 20,  5,  5,  5,  5,  5,  5,  5,  5,  5] },
+  { id: 'AML', name: 'Amaltas',        origin: 'South Asia',      c: '#C89820', bloom: [ 5,  5,  8, 95, 80, 12,  5,  5,  5,  5,  5,  5] },
+  { id: 'GUL', name: 'Gulmohur',       origin: 'Madagascar',      c: '#D03A18', bloom: [ 5,  5,  5, 30, 100, 80, 25,  5,  5,  5,  5,  5] },
+  { id: 'POI', name: 'Pride of India', origin: 'South Asia',      c: '#8A4898', bloom: [ 5,  5,  5,  5,  8, 55, 100, 90, 60, 12,  5,  5] },
+  { id: 'SPA', name: 'Scarlet Bell',   origin: 'Uganda',          c: '#C03818', bloom: [ 5,  5,  5,  5,  5,  5, 15, 75, 100, 85, 25,  5] },
+  { id: 'PEL', name: 'Copper Pod',     origin: 'South Asia',      c: '#C87820', bloom: [ 5,  5,  5,  5,  5,  5,  5,  5, 30, 95, 85, 10] },
 ];
 
 export function hexRgb(h) {

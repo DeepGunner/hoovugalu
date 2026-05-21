@@ -11,70 +11,655 @@
 }
 
 body{
-  background:var(--bg); color:var(--ink);
+  /* Match the drawer cream so any rounded-corner cutaway on the slid-out
+     page reveals the same colour as the drawer, not the page bg. */
+  background:#EFE8D5; color:var(--ink);
   font-family:'Cormorant Garamond',Georgia,serif;
   font-size:17px; line-height:1.55;
   margin:0; padding:0;
   -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+}
+
+@keyframes r-sp-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(calc(-100% - 24px)); }
 }
 
 @keyframes loopCardIn {
   from { opacity: 0; transform: translateY(8px) scale(0.96); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
+/* Unified story sheet — slides up from bottom of viewport on pixel click.
+   Preserves the translateX(-50%) horizontal centering on the article. */
+@keyframes loopCardSlideUp {
+  from { opacity: 0; transform: translate(-50%, 100%); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+/* Used when the tapped pixel sits in the lower 40% — card drops in from the
+   top instead so the active pixel below stays visible. */
+@keyframes loopCardDropDown {
+  from { opacity: 0; transform: translate(-50%, -100%); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
 
 /* Bloom Calendar header — mirror Soundscape/1908 landing typography */
 .bloom-header .vs-num{
   font-family:'Space Mono',monospace !important;
-  font-size:13px !important; letter-spacing:.24em !important;
+  font-weight:400 !important;
+  font-size:13px !important; letter-spacing:.15em !important;
   text-transform:uppercase;
   color:var(--ink2);
-  display:block; margin:0 0 6px;
+  display:block; margin:0 0 8px;
 }
 .bloom-header .vs-num::before{ display:none; content:none; }
 .bloom-header .vs-title{
   font-family:'Cormorant Garamond',Georgia,serif !important;
-  font-size:64px !important; font-style:italic !important; font-weight:300 !important;
-  line-height:1.02 !important; letter-spacing:-0.012em !important;
-  margin:0 0 14px !important;
+  font-style:italic !important; font-weight:700 !important;
+  font-size:64px !important;
+  line-height:1.15 !important; letter-spacing:0 !important;
+  margin:0 0 18px !important;
   max-width:900px !important;
   color:var(--ink);
 }
 .bloom-header .vs-desc{
-  font-family:'Cormorant Garamond',Georgia,serif !important;
-  font-size:18px !important; font-style:italic !important;
-  line-height:1.55 !important; max-width:780px !important;
+  font-family:'Inter','DM Sans',system-ui,sans-serif !important;
+  font-style:normal !important; font-weight:400 !important;
+  font-size:18px !important;
+  line-height:1.6 !important; letter-spacing:0 !important;
+  max-width:780px !important;
   margin:0 0 22px !important;
   color:var(--ink2);
 }
-@media (max-width:560px){
-  .bloom-header .vs-title{ font-size:28px !important; line-height:1.05 !important; margin-bottom:8px !important; }
-  .bloom-header .vs-desc{ font-size:12.5px !important; line-height:1.45 !important; }
-  .bloom-header .vs-num{ font-size:11px !important; letter-spacing:.20em !important; }
+@media (max-width:768px){
+  .bloom-header .vs-num{ font-size:11px !important; letter-spacing:.15em !important; }
+  .bloom-header .vs-title{ font-size:32px !important; line-height:1.15 !important; margin-bottom:12px !important; }
+  .bloom-header .vs-desc{ font-size:14px !important; line-height:1.55 !important; }
 }
 
 /* ── LANDING (Soundscape as homepage) ── */
 .landing-root{ position:relative; }
 .landing-topbar{
   position:fixed; top:0; left:0; right:0; z-index:9999;
-  display:flex; align-items:center; justify-content:space-between;
-  padding:14px 22px;
+  display:grid; grid-template-columns:1fr auto 1fr; align-items:center;
+  padding:14px 22px; gap:14px;
   background:linear-gradient(to bottom, rgba(250,250,248,.92), rgba(250,250,248,0));
   backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
   pointer-events:none;
 }
 .landing-topbar > *{ pointer-events:auto; }
+/* Circular white hamburger — sits ABOVE the page wrapper (and the drawer)
+   so it remains tappable when the page has slid right. Pulses gently as
+   a living affordance. Clicking it toggles the drawer open/closed. */
+.landing-menu{
+  justify-self:start;
+  background:#FFFFFF; border:1px solid rgba(16,15,12,.08); cursor:pointer;
+  padding:0; margin:0;
+  color:var(--ink);
+  display:inline-flex; align-items:center; justify-content:center;
+  width:44px; height:44px; border-radius:50%;
+  box-shadow:0 4px 14px rgba(20,15,10,.08);
+  position:relative; z-index:100;
+  transition:transform .25s cubic-bezier(.4,.0,.2,1), box-shadow .25s ease;
+  animation:menuBreath 3.6s ease-in-out infinite;
+}
+.landing-menu:hover{ box-shadow:0 6px 18px rgba(20,15,10,.14); }
+/* Slight grow on press — same icon, no rotation. */
+.landing-menu:active{ transform:scale(1.08); }
+.landing-menu.is-open{ box-shadow:0 6px 18px rgba(20,15,10,.16); }
+@keyframes menuBreath {
+  0%, 100% { box-shadow:0 4px 14px rgba(20,15,10,.08), 0 0 0 0 rgba(20,15,10,.10); }
+  50%      { box-shadow:0 6px 18px rgba(20,15,10,.12), 0 0 0 6px rgba(20,15,10,0); }
+}
+/* On the landing/home page, match the hamburger to the landing pill glass
+   treatment so it reads as part of the same UI family. */
+.landing-menu.on-hero {
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 4px 14px rgba(20, 15, 10, 0.06);
+}
+/* On the landing/home AND about pages, strip the topbar's cream fade so
+   the page background runs cleanly to the top of the viewport. */
+.landing-hero ~ * .landing-topbar,
+body:has(.landing-hero) .landing-topbar,
+body:has(.about-page) .landing-topbar {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.landing-menu:hover{ background:rgba(16,15,12,.06); }
+.landing-topbar-spacer{ justify-self:end; }
+/* Brand — two logo SVGs (English + Kannada) cross-fade in the same slot. */
 .landing-brand{
-  font-family:'Space Mono',monospace;
-  font-size:18px; font-weight:700; color:var(--ink);
+  justify-self:center;
+  color:var(--ink);
   text-decoration:none; line-height:1;
-  letter-spacing:.22em; text-transform:uppercase;
-  display:flex; flex-direction:column; gap:5px;
+  display:inline-flex; align-items:center;
 }
-.landing-brand-sub{
-  font-family:'Noto Sans Kannada','Space Mono',monospace;
-  font-size:12px; color:var(--ink2); letter-spacing:.18em;
+.landing-brand-logo-slot{
+  position:relative;
+  display:inline-block;
+  height:44px;
+  width:200px;
 }
+.landing-brand-logo{
+  position:absolute;
+  inset:0;
+  margin:auto;
+  display:block;
+  height:100%;
+  width:auto;
+  max-width:100%;
+  opacity:0;
+  transition:opacity .55s ease;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+.landing-brand-logo.is-visible{ opacity:1; }
+.landing-brand > svg{ flex:0 0 auto; }
+/* Single-line wordmark slot — English and Kannada are stacked at the same
+   position with a fixed min-width so the layout never shifts as we cross-
+   fade between them. */
+.landing-brand-wordmark{
+  position:relative;
+  display:inline-flex; align-items:center;
+  min-width:165px;
+  height:24px;
+}
+.landing-brand-word{
+  position:absolute; left:0; top:50%;
+  transform:translateY(-50%);
+  white-space:nowrap;
+  opacity:0;
+  transition:opacity .55s ease;
+  line-height:1;
+}
+.landing-brand-word.is-visible{ opacity:1; }
+.landing-brand-en{
+  font-family:'Poppins', system-ui, sans-serif;
+  font-weight:800;
+  font-size:20px;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+.landing-brand-kn{
+  font-family:'Noto Sans Kannada','Poppins', system-ui, sans-serif;
+  font-weight:800;
+  font-size:22px;
+  letter-spacing:.01em;
+  color:var(--ink);
+  line-height:1;
+  /* Kannada's em-box extends above its visual mass (the matra/diacritic
+     headline sits at the top of the box). Pull the glyph down so its visual
+     centre — not its box centre — lines up with the flower. */
+  transform:translateY(calc(-50% + 7px));
+}
+
+/* Left drawer */
+/* Drawer sits UNDER the page wrapper. When body.drawer-open fires, the page
+   wrapper slides right and reveals the drawer beneath it — Claude-mobile
+   style — instead of the drawer floating over the page. */
+/* Drawer width: 75vw on mobile so the page keeps a clear 25vw strip on the
+   right (Claude-mobile parity). Capped at 320px on larger viewports. */
+:root { --drawer-w: min(320px, 75vw); }
+
+/* ── About Us page ──
+   Vertical light-gray highlighter strip down the centre of a pure-white
+   canvas, 440px max-width text spine inside. */
+.about-page {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #FFFFFF;
+  display: flex;
+  justify-content: center;
+  padding: 96px 0 64px;
+}
+.about-strip {
+  width: 85vw;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 56px 28px 64px;
+  background: rgba(0, 0, 0, 0.03);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-left: 1px solid rgba(0, 0, 0, 0.05);
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+/* Mobile — drop the rigid rectangle. The whole page becomes a watercolor
+   paper wash: warm cream base with a few soft tinted blooms layered in. */
+@media (max-width: 899px) {
+  .about-page {
+    background:
+      radial-gradient(circle at 18% 12%, rgba(232, 198, 174, 0.42), transparent 40%),
+      radial-gradient(circle at 82% 18%, rgba(212, 200, 224, 0.38), transparent 42%),
+      radial-gradient(circle at 25% 78%, rgba(232, 218, 180, 0.36), transparent 45%),
+      radial-gradient(circle at 78% 88%, rgba(220, 198, 188, 0.34), transparent 42%),
+      radial-gradient(circle at 50% 50%, rgba(245, 240, 230, 0.7), transparent 70%),
+      #FAF5E8;
+    padding: 88px 22px 56px;
+  }
+  .about-strip {
+    width: 100%;
+    max-width: 460px;
+    padding: 0;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: none;
+    border-radius: 0;
+  }
+}
+.about-eyebrow {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #000000;
+  margin: 0 0 24px;
+}
+.about-title {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.15;
+  letter-spacing: 0;
+  color: var(--ink);
+  margin: 0 0 28px;
+}
+.about-body {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.65;
+  letter-spacing: 0;
+  color: #1A140F;
+  margin: 0 0 18px;
+}
+.about-body:last-child { margin-bottom: 0; }
+/* Author names — bold italic emphasis inside the body paragraphs. */
+.about-body strong em,
+.about-body em strong {
+  font-weight: 700;
+  font-style: italic;
+}
+
+/* Section headers — serif chapter dividers, matching the title family. */
+.about-eyebrow-section {
+  margin-top: 40px;
+  margin-bottom: 18px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 24px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #000000;
+}
+.about-sources {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex; flex-direction: column;
+  gap: 10px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.55;
+  letter-spacing: 0;
+  color: #1A140F;
+}
+.about-sources em {
+  font-style: normal;
+  font-weight: 600;
+}
+@media (min-width: 900px) {
+  .about-sources { font-size: 17px; gap: 12px; }
+  /* Desktop section headers — proper editorial scale, well clear of the
+     small Space Mono "About" eyebrow used at the very top. */
+  .about-eyebrow-section {
+    margin-top: 64px;
+    margin-bottom: 24px;
+    font-size: 36px !important;
+    line-height: 1.15;
+  }
+}
+
+@media (min-width: 900px) {
+  /* Desktop — page background carries the watercolor paper wash; the
+     strip on top is a frosted-glass rectangle that lets the wash ghost
+     through softly. */
+  .about-page {
+    background:
+      radial-gradient(circle at 12% 8%, rgba(232, 198, 174, 0.42), transparent 38%),
+      radial-gradient(circle at 88% 12%, rgba(212, 200, 224, 0.38), transparent 40%),
+      radial-gradient(circle at 16% 84%, rgba(232, 218, 180, 0.36), transparent 42%),
+      radial-gradient(circle at 84% 88%, rgba(220, 198, 188, 0.34), transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(245, 240, 230, 0.55), transparent 72%),
+      #FAF5E8;
+  }
+  .about-strip {
+    width: min(960px, 80vw);
+    max-width: 960px;
+    padding: 80px 80px 96px;
+    /* Frosted glass over the watercolor wash. */
+    background: rgba(255, 255, 255, 0.42);
+    backdrop-filter: blur(22px) saturate(1.2);
+    -webkit-backdrop-filter: blur(22px) saturate(1.2);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: 18px;
+    box-shadow: 0 18px 50px rgba(20, 15, 10, 0.10);
+  }
+  .about-eyebrow { font-size: 13px; }
+  .about-title { font-size: 64px; line-height: 1.15; margin-bottom: 36px; }
+  .about-body { font-size: 17px; line-height: 1.7; margin-bottom: 22px; }
+}
+
+/* ── Landing page (home view) ──
+   Full-bleed colour-clock backdrop with a centred refractive-glass ribbon
+   carrying the wordmark, hook copy, and navigation. */
+.landing-hero {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: #F8F5EE;
+}
+.landing-hero {
+  display: flex; align-items: center; justify-content: center;
+}
+.landing-hero-clock {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 0;
+}
+.landing-hero-clock canvas {
+  width: 100%; height: 100%; object-fit: cover;
+}
+/* Vertical glass column — left+right edges only, so the strip reads as a
+   chassis the clock lines sweep behind, not a closed-off box. */
+/* Contained rectangle — starts just above the logo, ends just below the
+   last pill. Auto height instead of filling the viewport top to bottom. */
+/* Narrative gateway block — absolutely centred on the viewport so the
+   surrounding breathing aura is always pinned to the exact centre point,
+   independent of any topbar height or flex shrink behaviour. */
+.landing-hero-narrative {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  width: 100%;
+  max-width: 440px;
+  padding: 0 24px;
+  display: flex; flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-sizing: border-box;
+  transition: opacity .32s ease, transform .32s ease;
+}
+.landing-hero-narrative.is-leaving {
+  opacity: 0;
+  transform: translate(-50%, calc(-50% - 6px));
+}
+/* Circular blurred aura — sized to encompass the text, lifts the ink off
+   the moving gradient without occluding the clock hands. */
+.landing-hero-aura {
+  position: absolute;
+  top: 50%; left: 50%;
+  /* Big enough that every line of the narrative — including the
+     widest BLOOM CALENDAR row — sits comfortably inside the circle
+     on both desktop and mobile portrait viewports. */
+  width: min(612px, 102vw);
+  height: min(612px, 102vw);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px) saturate(1.1);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
+  pointer-events: none;
+  z-index: -1;
+  animation: landingAuraBreath 6s ease-in-out infinite;
+}
+@keyframes landingAuraBreath {
+  0%, 100% { transform: translate(-50%, -50%) scale(1.00); opacity: 0.94; }
+  50%      { transform: translate(-50%, -50%) scale(1.05); opacity: 1.00; }
+}
+/* Logo cross-fade slot — fixed-size container so the two SVGs overlap and
+   cross-fade in place every 6s. */
+.landing-hero-logo-slot {
+  position: relative;
+  display: block;
+  /* +10% vs the previous 180/240 size */
+  width: clamp(200px, 66%, 264px);
+  height: clamp(52px, 9vh, 70px);
+  margin: 0 auto 24px;
+}
+.landing-hero-logo {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 900ms ease;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.06));
+}
+.landing-hero-logo.is-visible { opacity: 1; }
+/* Welded prose block — Cormorant medium italic for the narrative,
+   bracketed Space Mono gateways inline. Desktop ups the size + width so
+   the editorial column reads larger and fills the open canvas. */
+.landing-hero-prose {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(18px, 2vw, 24px);
+  line-height: 1.55;
+  letter-spacing: 0.02em;
+  color: #1A1523;
+  margin: 0;
+}
+
+/* ── Landing — desktop scaling ── */
+@media (min-width: 900px) {
+  .landing-hero-narrative {
+    max-width: 720px;
+    padding: 0 32px;
+  }
+  .landing-hero-prose {
+    font-size: 30px;
+    /* keep the typographic spec (1.55 line-height, 0.02em tracking) on desktop too */
+    line-height: 1.55;
+    letter-spacing: 0.02em;
+  }
+  .landing-hero-gateway {
+    font-size: 0.62em;   /* keeps Space Mono visually balanced against the bigger serif */
+    padding: 3px 10px;
+  }
+  .landing-hero-logo-slot {
+    width: 320px;
+    height: 90px;
+    margin-bottom: 32px;
+  }
+  .landing-hero-aura {
+    width: min(816px, 60vw);
+    height: min(816px, 60vw);
+  }
+}
+/* Inline gateway — Space Mono bold uppercase capsule, wrapped between the
+   slashes. A faint white-glass strip behind it tells the eye exactly where
+   to press without building hard block borders. */
+.landing-hero-gateway {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.22);
+  border: none;
+  border-radius: 4px;
+  padding: 2px 8px;
+  /* Margin only on the LEFT so punctuation can sit flush against the
+     closing slash on the right. */
+  margin: 0 0 0 4px;
+  cursor: pointer;
+  font-family: 'Space Mono', monospace;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 0.74em;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #1A1523;
+  vertical-align: baseline;
+  transition: background .12s ease, color .12s ease;
+  outline: none;
+}
+.landing-hero-gateway:hover,
+.landing-hero-gateway:focus-visible {
+  background: rgba(255, 255, 255, 0.38);
+}
+/* Tactile tap flash — capsule fills SOLID white, text snaps to crisp
+   bold black. Premium click confirmation before the page transition. */
+.landing-hero-gateway:active {
+  background: #FFFFFF;
+  color: #000000;
+}
+
+/* Sensory expansion — Inter regular, muted charcoal. */
+.landing-hero-sub {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 400;
+  font-size: clamp(13px, 1.1vw, 15px);
+  line-height: 1.55;
+  color: #2C2220;
+  text-align: center;
+  margin: 0 0 28px;
+  max-width: 380px;
+}
+/* Stacked glass pill nav — light glass capsules matching the player UI. */
+.landing-hero-nav {
+  display: flex; flex-direction: column;
+  width: 100%;
+  align-items: stretch;
+  gap: 10px;
+}
+/* Stacked glass capsules — softer rounded rectangle (20px) matching the
+   outer card's 26px curvature for geometric harmony. */
+.landing-hero-pill {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 100%;
+  padding: 11px 22px;
+  background: rgba(255, 255, 255, 0.125);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #1A1523;
+  transition: background .18s ease, transform .18s ease;
+}
+.landing-hero-pill:hover {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+}
+.landing-hero-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #1A1523; flex: 0 0 auto;
+}
+
+@media (max-width: 640px) {
+  .landing-hero-ribbon {
+    width: 85vw;
+    max-width: 85vw;
+    padding: 40px 22px;
+  }
+  .landing-hero-logo { margin-bottom: 22px; }
+  .landing-hero-hook { font-size: 20px; margin-bottom: 22px; }
+  .landing-hero-sub { font-size: 13px; margin-bottom: 22px; }
+  .landing-hero-pill { font-size: 11px; padding: 12px 16px; }
+}
+/* Stacking order (bottom → top): drawer (z:0) under the page wrapper (z:5)
+   which is under the backdrop (z:50) which is under the hamburger (z:100).
+   This guarantees the page covers the drawer in its default state and only
+   reveals it when slid right. */
+/* Backdrop covers only the SLID-OUT page strip on the right — never the
+   drawer itself, so the drawer's nav buttons stay clickable. */
+.landing-drawer-backdrop{
+  position:fixed; top:0; bottom:0;
+  left:var(--drawer-w); right:0;
+  z-index:50;
+  background:transparent;
+  opacity:0; visibility:hidden;
+  transition:opacity .28s ease, visibility .28s ease;
+  pointer-events:none;
+}
+.landing-drawer-backdrop.is-open{ opacity:1; visibility:visible; pointer-events:auto; }
+.landing-drawer{
+  position:fixed; top:0; left:0; bottom:0; z-index:0; /* sits beneath the page */
+  width:var(--drawer-w);
+  /* Warm watercolor cream — the soft beige that reads beautifully next to
+     a white page on the About view. Held constant across every page so the
+     drawer always lands at the same colour. */
+  background:#EFE8D5;
+  padding:80px 28px 28px;
+  display:flex; flex-direction:column;
+}
+/* Page wrapper slides right when drawer opens, exposing the drawer under it.
+   The top-level <body> children — our key="..." wrappers — get the shift. */
+/* Dedicated slide layer — sits on top of the drawer (z:0) and slides right
+   when body.drawer-open fires. Has an opaque background so the drawer is
+   completely hidden by default. */
+.page-slide {
+  position:relative;
+  z-index:5;
+  background:#F8F5EE;
+  min-height:100vh;
+  border-radius:0;
+  transition:transform .32s cubic-bezier(.22,1,.36,1),
+             box-shadow .32s cubic-bezier(.22,1,.36,1),
+             border-radius .32s cubic-bezier(.22,1,.36,1);
+  will-change:transform;
+  overflow:hidden; /* round-corner clipping when slid */
+}
+body.drawer-open .page-slide {
+  transform:translateX(var(--drawer-w));
+  box-shadow:-16px 0 36px rgba(20,15,10,.18), -2px 0 6px rgba(20,15,10,.08);
+  /* Rounded top-left + bottom-left corners — the page looks like a card
+     peeking out from under the drawer. */
+  border-radius:22px 0 0 22px;
+}
+.landing-drawer-close{
+  position:absolute; top:18px; right:18px;
+  background:transparent; border:none; cursor:pointer;
+  font-size:28px; line-height:1; color:var(--ink2);
+  padding:4px 10px;
+}
+.landing-drawer-close:hover{ color:var(--ink); }
+.landing-drawer-nav{ display:flex; flex-direction:column; gap:2px; margin-top:8px; }
+.landing-drawer-link{
+  display:flex; align-items:center; gap:18px;
+  background:transparent; border:none; cursor:pointer;
+  text-align:left;
+  font-family:'Inter', system-ui, sans-serif;
+  font-weight:500;
+  font-size:17px; line-height:1.2;
+  color:var(--ink);
+  padding:14px 10px;
+  border-radius:10px;
+  opacity:.85;
+  transition:background .15s ease, opacity .15s ease;
+}
+.landing-drawer-link svg{ flex:0 0 auto; opacity:.92; }
+.landing-drawer-link:hover{ opacity:1; background:rgba(16,15,12,.05); }
+.landing-drawer-link.is-active{ opacity:1; background:rgba(16,15,12,.07); font-weight:600; }
+.landing-drawer-link.is-active svg{ opacity:1; }
 .landing-nav{ display:flex; gap:22px; align-items:center; }
 .landing-navlink{
   font-family:'Space Mono',monospace;
@@ -115,16 +700,28 @@ body{
 }
 .landing-inner.snap-inner .vs-num::before{ display:none; content:none; }
 .landing-inner.snap-inner .vs-num{
-  display:block; margin:74px 0 6px;
-}
-.landing-inner.snap-inner .vs-num{
-  font-size:13px; letter-spacing:.24em;
+  display:block; margin:74px 0 8px;
+  font-family:'Space Mono',monospace;
+  font-weight:400;
+  font-size:13px; letter-spacing:.15em;
+  text-transform:uppercase;
+  color:var(--ink2);
 }
 .landing-inner.snap-inner .vs-title{
-  font-size:64px; margin-bottom:14px; max-width:900px; line-height:1.02;
+  font-family:'Cormorant Garamond',Georgia,serif;
+  font-style:italic; font-weight:700;
+  font-size:64px; line-height:1.15;
+  letter-spacing:0;
+  margin:0 0 18px; max-width:900px;
+  color:var(--ink);
 }
 .landing-inner.snap-inner .vs-desc{
-  max-width:780px; font-size:18px; line-height:1.55; margin-bottom:22px;
+  font-family:'Inter','DM Sans',system-ui,sans-serif;
+  font-style:normal; font-weight:400;
+  font-size:18px; line-height:1.6;
+  letter-spacing:0;
+  max-width:780px; margin:0 0 22px;
+  color:var(--ink2);
 }
 
 .landing-inner.snap-inner .vs-frame{
@@ -142,80 +739,179 @@ body{
   border-radius:0; filter:none;
   box-shadow:0 -20px 60px -30px rgba(40,20,60,0.35) inset;
 }
+/* Liquid-glass player card — three vertical blocks:
+   (1) header with play btn + month/species,
+   (2) ultra-slim glass track with split fill,
+   (3) interactive timeline footer. */
+.landing-inner.snap-inner .player-card{
+  position:absolute; left:24px; right:24px; bottom:24px;
+  z-index:4;
+  background:rgba(255,255,255,0.14);
+  backdrop-filter:blur(28px) saturate(1.5);
+  -webkit-backdrop-filter:blur(28px) saturate(1.5);
+  border:1px solid rgba(255,255,255,0.32);
+  border-radius:22px;
+  box-shadow:
+    0 10px 36px rgba(0,0,0,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.40);
+  padding:22px 24px 18px;
+  display:flex; flex-direction:column;
+}
+/* Spacing: large gap between header and slider, tight gap between slider
+   and timeline so they read as one unit. */
+.landing-inner.snap-inner .player-card .r-info{ margin-bottom:26px; }
+.landing-inner.snap-inner .player-card .ctrl-row{ margin-bottom:12px; }
 .landing-inner.snap-inner .r-info{
-  position:absolute; left:0; right:0; bottom:0;
-  display:flex; align-items:center; gap:20px;
-  padding:26px 32px 24px;
-  background:linear-gradient(to top, rgba(20,15,10,.55), rgba(20,15,10,0));
-  color:#fff; z-index:3;
+  position:static;
+  display:grid;
+  grid-template-columns:auto 1fr;
+  align-items:center; column-gap:18px; row-gap:10px;
+  padding:0;
+  background:none;
+  color:#1a140f; z-index:auto;
 }
 .landing-inner.snap-inner .r-info .play-btn{
-  background:rgba(255,255,255,.94); color:#1a1410;
-  border:none; border-radius:999px;
-  width:60px; height:60px; flex:0 0 60px;
+  grid-row:1 / span 2; grid-column:1;
+  align-self:stretch;
+  background:rgba(255,255,255,0.55);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,0.6);
+  border-radius:14px;
+  color:#1a1410;
+  width:64px; min-height:64px; flex:0 0 64px;
   display:inline-flex; align-items:center; justify-content:center;
-  cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.30);
-  transition:transform .15s ease, box-shadow .15s ease;
+  cursor:pointer;
+  box-shadow:0 4px 12px rgba(0,0,0,.15);
+  transition:transform .15s ease, background .15s ease;
 }
 .landing-inner.snap-inner .r-info .play-btn:hover{
-  transform:scale(1.06); box-shadow:0 8px 24px rgba(0,0,0,.35);
+  background:rgba(255,255,255,0.75);
+  transform:scale(1.04);
 }
-.landing-inner.snap-inner .r-info .play-btn svg{ width:26px; height:26px; }
+.landing-inner.snap-inner .r-info .play-btn svg{ width:22px; height:22px; }
 .landing-inner.snap-inner .r-info .r-mo{
-  font-family:'Cormorant Garamond',serif; font-style:italic;
-  font-size:30px; color:#fff; line-height:1.1;
+  grid-row:1; grid-column:2;
+  font-family:'Cormorant Garamond',Georgia,serif;
+  font-style:italic; font-weight:700;
+  font-size:36px; letter-spacing:0;
+  color:#1a140f; line-height:1.05;
 }
+/* Tree-list container — flex row. Single visible line on desktop (no mask,
+   so the first colored dot is never clipped). On mobile this turns into a
+   horizontal marquee via the second duplicate copy. */
 .landing-inner.snap-inner .r-info .r-sp{
-  font-family:'Space Mono',monospace;
-  font-size:12px; color:rgba(255,255,255,.88);
-  letter-spacing:.18em; text-align:left;
-  max-width:none; flex:1;
+  grid-row:2; grid-column:2;
+  display:flex; align-items:center; gap:24px;
+  overflow:hidden;
+  font-family:'Inter','DM Sans',system-ui,sans-serif;
+  font-weight:400;
+  font-size:13px; letter-spacing:0;
+  color:rgba(40,30,20,0.85);
+  line-height:1.4;
+  max-width:100%;
+  white-space:nowrap;
+  height:22px;
 }
+.landing-inner.snap-inner .r-info .r-sp-inner{
+  display:inline-flex; align-items:center; gap:10px;
+  flex:0 0 auto;
+}
+.landing-inner.snap-inner .r-info .r-sp-chip{
+  display:inline-flex; align-items:center; gap:6px;
+}
+.landing-inner.snap-inner .r-info .r-sp-dot{
+  width:9px; height:9px; border-radius:50%;
+  display:inline-block;
+  box-shadow:0 0 0 1px rgba(255,255,255,0.4);
+}
+.landing-inner.snap-inner .r-info .r-sp-sep{
+  color:rgba(40,30,20,0.45);
+}
+/* Desktop: hide the second (duplicate) copy unless overflow forces it */
+.landing-inner.snap-inner .r-info .r-sp-inner + .r-sp-inner{ display:none; }
 
-/* Slider strip — visually compelling, with breathing room */
+/* Ultra-slim glass track block — edge-to-edge, no text labels, micro border */
 .landing-inner.snap-inner .ctrl-row{
   flex:0 0 auto;
-  padding:42px 56px 14px;
-  background:rgba(248,245,238,.98); border-top:none;
+  padding:8px 10px;
+  background:rgba(255,255,255,0.10);
+  border:1px solid rgba(255,255,255,0.28);
+  border-radius:999px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.30);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
 }
 .landing-inner.snap-inner .ctrl-row input[type="range"]{
-  height:6px; background:linear-gradient(to right,
-    rgba(122,158,150,.55), rgba(201,64,40,.55), rgba(107,85,160,.55),
-    rgba(200,72,120,.55), rgba(200,152,32,.55), rgba(208,58,24,.55),
-    rgba(138,72,152,.55), rgba(200,80,32,.55), rgba(168,104,133,.55));
-  border-radius:6px; cursor:pointer;
+  display:block; width:100%;
+  -webkit-appearance:none; appearance:none;
+  height:4px; cursor:pointer;
+  background:linear-gradient(to right,
+    rgba(255,255,255,0.92) 0%,
+    rgba(255,255,255,0.92) calc(var(--slider-pct, 18%) - 0.1%),
+    rgba(255,255,255,0.22) calc(var(--slider-pct, 18%) + 0.1%),
+    rgba(255,255,255,0.22) 100%);
+  border-radius:4px;
+  outline:none;
 }
 .landing-inner.snap-inner .ctrl-row input[type="range"]::-webkit-slider-thumb{
-  -webkit-appearance:none; width:28px; height:28px; border-radius:50%;
-  background:#fff; border:1.5px solid rgba(0,0,0,.18);
-  box-shadow:0 4px 12px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.95);
-  cursor:grab; transition:transform .18s, box-shadow .18s;
+  -webkit-appearance:none; width:18px; height:18px; border-radius:50%;
+  background:#fff;
+  border:1px solid rgba(255,255,255,0.85);
+  box-shadow:0 2px 8px rgba(0,0,0,0.18);
+  cursor:grab;
+  transition:transform .18s;
 }
 .landing-inner.snap-inner .ctrl-row input[type="range"]::-webkit-slider-thumb:hover{
-  transform:scale(1.12); box-shadow:0 6px 18px rgba(0,0,0,.30);
+  transform:scale(1.10);
 }
 .landing-inner.snap-inner .ctrl-row input[type="range"]::-webkit-slider-thumb:active{
-  cursor:grabbing; transform:scale(1.18);
+  cursor:grabbing; transform:scale(1.15);
 }
 .landing-inner.snap-inner .ctrl-row input[type="range"]::-moz-range-thumb{
-  width:28px; height:28px; border-radius:50%;
-  background:#fff; border:1.5px solid rgba(0,0,0,.18);
-  box-shadow:0 4px 12px rgba(0,0,0,.22);
+  width:18px; height:18px; border-radius:50%;
+  background:#fff; border:1px solid rgba(255,255,255,0.85);
+  box-shadow:0 2px 8px rgba(0,0,0,0.18);
   cursor:grab;
 }
+/* Each month label sits at the SAME horizontal position the slider thumb
+   would occupy for that month value, so the active month is centered
+   under the knob. ctrl-row has padding 42px 56px and thumb radius 14px,
+   so the thumb travel-range starts 70px in from each row edge. */
+/* Interactive timeline footer — months evenly spread across the same span
+   as the slider track. Jan center at track-start, Dec center at track-end. */
 .landing-inner.snap-inner .mo-ticks{
   flex:0 0 auto;
-  background:rgba(248,245,238,.98);
-  padding:10px 56px 22px;
+  background:none;
+  position:relative;
+  height:22px;
+  padding:0 9px;
 }
 .landing-inner.snap-inner .mo-ticks span{
-  font-size:16px; letter-spacing:.10em; opacity:.7; cursor:pointer;
-  transition:color .15s, opacity .15s;
+  position:absolute;
+  top:50%;
+  left:calc(9px + (var(--mi) / 11) * (100% - 18px));
+  transform:translate(-50%, -50%);
+  font-family:'Inter',system-ui,sans-serif !important;
+  font-weight:500 !important; font-style:normal !important;
+  font-size:13px !important; letter-spacing:.01em !important;
+  color:#ffffff !important; opacity:.7 !important;
+  cursor:pointer;
+  line-height:1; white-space:nowrap;
+  text-decoration:none;
+  transition:font-weight .18s ease, color .18s ease, opacity .18s ease;
+  text-shadow:0 1px 3px rgba(20,15,10,0.45);
+  flex:none !important;
 }
 .landing-inner.snap-inner .mo-ticks span.active{
-  opacity:1; color:var(--ink); font-weight:700;
+  color:#1a140f !important;
+  opacity:1 !important;
+  font-weight:700 !important;
+  text-decoration:underline !important;
+  text-decoration-thickness:1.5px !important;
+  text-underline-offset:12px !important;
+  text-shadow:none;
 }
-.landing-inner.snap-inner .mo-ticks span:hover{ opacity:1; }
 .landing-inner.snap-inner .tree-legend{ display:none; }
 
 /* Loop view (1908) — same immersive treatment, no controls strip */
@@ -230,7 +926,7 @@ body{
 }
 .landing-loop.snap-inner .canopy-strip{ display:none; }
 
-@media (max-width:560px){
+@media (max-width:768px){
   .landing-topbar{ padding:10px 14px; }
   .landing-brand{ font-size:13px; }
   .landing-brand-sub{ font-size:10px; }
@@ -241,20 +937,51 @@ body{
   .landing-inner.snap-inner .vs-desc{
     padding-left:18px; padding-right:18px;
   }
-  .landing-inner.snap-inner .vs-num{ margin-top:64px; font-size:11px; letter-spacing:.20em; }
-  .landing-inner.snap-inner .vs-title{ font-size:30px; margin-bottom:8px; }
-  .landing-inner.snap-inner .vs-desc{ font-size:13px; margin-bottom:12px; line-height:1.45; }
-  .landing-inner.snap-inner .r-info{ padding:18px 16px 14px; gap:14px; }
-  .landing-inner.snap-inner .r-info .play-btn{ width:48px; height:48px; flex-basis:48px; }
-  .landing-inner.snap-inner .r-info .play-btn svg{ width:22px; height:22px; }
-  .landing-inner.snap-inner .r-info .r-mo{ font-size:20px; }
-  .landing-inner.snap-inner .r-info .r-sp{ font-size:10px; letter-spacing:.14em; }
-  .landing-inner.snap-inner .ctrl-row{ padding:28px 22px 10px; }
-  .landing-inner.snap-inner .ctrl-row input[type="range"]{ height:5px; }
-  .landing-inner.snap-inner .ctrl-row input[type="range"]::-webkit-slider-thumb{ width:26px; height:26px; }
-  .landing-inner.snap-inner .ctrl-row input[type="range"]::-moz-range-thumb{ width:26px; height:26px; }
-  .landing-inner.snap-inner .mo-ticks{ padding:8px 18px 18px; }
-  .landing-inner.snap-inner .mo-ticks span{ font-size:10px; }
+  .landing-inner.snap-inner .vs-num{ margin-top:64px; font-size:11px; letter-spacing:.15em; }
+  .landing-inner.snap-inner .vs-title{ font-size:32px; line-height:1.15; margin-bottom:12px; }
+  .landing-inner.snap-inner .vs-desc{ font-size:14px; line-height:1.55; margin-bottom:14px; }
+  .landing-inner.snap-inner .player-card{
+    left:14px; right:14px; bottom:14px;
+    padding:14px 14px 12px;
+    border-radius:18px;
+  }
+  .landing-inner.snap-inner .player-card .r-info{ margin-bottom:18px; }
+  .landing-inner.snap-inner .player-card .ctrl-row{ margin-bottom:14px; }
+  .landing-inner.snap-inner .r-info{ padding:0; gap:12px; row-gap:6px; }
+  .landing-inner.snap-inner .r-info .play-btn{
+    width:52px; min-height:52px; flex-basis:52px; border-radius:12px;
+  }
+  .landing-inner.snap-inner .r-info .play-btn svg{ width:20px; height:20px; }
+  .landing-inner.snap-inner .r-info .r-mo{ font-size:26px; line-height:1.05; }
+  .landing-inner.snap-inner .r-info .r-sp{
+    font-size:12px;
+    height:18px;
+    gap:0;
+    -webkit-mask-image:linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+    mask-image:linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+  }
+  /* Mobile: scroll tree names as a marquee — second copy provides
+     seamless loop; translateX(-50%) of doubled width restarts cleanly. */
+  .landing-inner.snap-inner .r-info .r-sp-inner + .r-sp-inner{ display:inline-flex; }
+  .landing-inner.snap-inner .r-info .r-sp-inner{
+    padding-right:24px;
+    animation:r-sp-marquee 22s linear infinite;
+  }
+  .landing-inner.snap-inner .ctrl-row{ padding:6px 8px; border-radius:999px; }
+  .landing-inner.snap-inner .ctrl-row input[type="range"]{ height:3px; }
+  .landing-inner.snap-inner .ctrl-row input[type="range"]::-webkit-slider-thumb{ width:14px; height:14px; }
+  .landing-inner.snap-inner .ctrl-row input[type="range"]::-moz-range-thumb{ width:14px; height:14px; }
+  .landing-inner.snap-inner .mo-ticks{ padding:0 7px; height:26px; }
+  .landing-inner.snap-inner .mo-ticks span{
+    font-size:9px !important;
+    opacity:.65 !important;
+    left:calc(7px + (var(--mi) / 11) * (100% - 14px));
+  }
+  .landing-inner.snap-inner .mo-ticks span.active{
+    font-size:11px !important;
+    opacity:1 !important;
+    text-underline-offset:6px !important;
+  }
 }
 
 /* ── SNAP CONTAINER (9 paged sections) ── */
