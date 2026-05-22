@@ -629,18 +629,14 @@ body:has(.about-page) .landing-topbar {
   width: 100%; height: 100%;
   object-fit: contain;
   object-position: center;
-  opacity: 0;
-  visibility: hidden;
-  /* Short, snappy cross-fade so the two wordmarks never visibly overlap
-     during the transition (different PNG aspect ratios make a ghosted
-     double-image look messy at slower speeds). */
-  transition: opacity 280ms ease, visibility 0s linear 280ms;
+  /* INSTANT swap — display:none on the inactive wordmark means only one
+     ever paints, so the two PNGs (different aspect ratios) can never
+     visually stack regardless of transition timing. */
+  display: none;
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.06));
 }
 .landing-hero-logo.is-visible {
-  opacity: 1;
-  visibility: visible;
-  transition: opacity 280ms ease, visibility 0s linear 0s;
+  display: block;
 }
 /* Welded prose block — Cormorant medium italic for the narrative,
    bracketed Space Mono gateways inline. Desktop ups the size + width so
