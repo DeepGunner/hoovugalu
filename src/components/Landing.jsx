@@ -52,7 +52,7 @@ export default function Landing({ onNav }) {
             onClick={() => go('soundscape')}
           >
             /&nbsp;SOUNDSCAPE&nbsp;/
-          </button>{', '}
+          </button>{' , '}
           track seasonal overlap alongside Piet Oudolf on the{' '}
           <button
             type="button"
@@ -60,7 +60,7 @@ export default function Landing({ onNav }) {
             onClick={() => go('wheel')}
           >
             /&nbsp;BLOOM&nbsp;CALENDAR&nbsp;/
-          </button>{', '}
+          </button>{' , '}
           or trace 118 years in the{' '}
           <button
             type="button"
@@ -68,7 +68,7 @@ export default function Landing({ onNav }) {
             onClick={() => go('loop')}
           >
             /&nbsp;LOOP&nbsp;/
-          </button>{'. '}
+          </button>{' . '}
           Learn{' '}
           <button
             type="button"
