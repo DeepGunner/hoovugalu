@@ -239,7 +239,7 @@ export default function ColorClock({ className, style }) {
       // Minute hand — thinner, but same dual treatment (dark core + faint halo)
       const minAngle = mAngle(prog * 12 * 12);
       // Mobile portrait gets a slightly longer minute-hand tail
-      const minMul = isLandscape ? 0.78 : 0.82;
+      const minMul = isLandscape ? 0.94 : 0.82;
       const mx2 = cx + Math.cos(minAngle) * (handMax * minMul);
       const my2 = cy + Math.sin(minAngle) * (handMax * minMul);
       ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(mx2, my2);
