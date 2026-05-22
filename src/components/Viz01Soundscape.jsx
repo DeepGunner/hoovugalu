@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as Tone from 'tone';
+import { installAudioUnlock } from '../data/audioUnlock.js';
 import { SP, M_LONG, hexRgb } from '../data/bloom.js';
 import { createAmbience } from '../data/ambience.js';
 
@@ -347,6 +348,9 @@ void main(){
       if (m >= 9 && m <= 10) return 'autumn';
       return 'winter';
     }
+    // Aggressive audio unlock for in-app webviews (LinkedIn, Instagram, etc.)
+    installAudioUnlock(Tone);
+
     async function initAudio() {
       if (audioReady) return;
       await Tone.start();
