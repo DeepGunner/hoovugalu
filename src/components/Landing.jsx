@@ -31,13 +31,13 @@ export default function Landing({ onNav }) {
         <span className="landing-hero-aura" aria-hidden="true" />
         <span className="landing-hero-logo-slot" aria-label="Hoovugalu">
           <img
-            src="/HoovugaluLogoEnglish.svg"
+            src="/HoovugaluLogoEnglish.png"
             alt="Hoovugalu"
             className={`landing-hero-logo${showKn ? '' : ' is-visible'}`}
             aria-hidden={showKn}
           />
           <img
-            src="/HoovugaluLogoKanada.svg"
+            src="/HoovugaluLogoKanada.png"
             alt="ಹೂವುಗಳು"
             className={`landing-hero-logo${showKn ? ' is-visible' : ''}`}
             aria-hidden={!showKn}
