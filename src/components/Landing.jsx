@@ -44,8 +44,8 @@ export default function Landing({ onNav }) {
           />
         </span>
         <p className="landing-hero-prose">
-          A year-long ritusamhara of Gustav Krumbiegel's programmed streets of Bangalore.
-          Step inside to experience the city's sonic rhythms via{' '}
+          A year-long ritusamhara of Krumbiegel's programmed streets of Bangalore.
+          Step inside to listen to the city bloom via{' '}
           <button
             type="button"
             className="landing-hero-gateway"
@@ -53,7 +53,7 @@ export default function Landing({ onNav }) {
           >
             /&nbsp;SOUNDSCAPE&nbsp;/
           </button>{', '}
-          track overlapping seasonal colour compared with Piet Oudolf on the{' '}
+          track seasonal overlap alongside Piet Oudolf on the{' '}
           <button
             type="button"
             className="landing-hero-gateway"
@@ -61,7 +61,7 @@ export default function Landing({ onNav }) {
           >
             /&nbsp;BLOOM&nbsp;CALENDAR&nbsp;/
           </button>{', '}
-          or explore 118 rows of botanical history in the continuous{' '}
+          or trace 118 years in the{' '}
           <button
             type="button"
             className="landing-hero-gateway"
@@ -69,7 +69,7 @@ export default function Landing({ onNav }) {
           >
             /&nbsp;LOOP&nbsp;/
           </button>{'. '}
-          Learn more{' '}
+          Learn{' '}
           <button
             type="button"
             className="landing-hero-gateway"

@@ -579,16 +579,17 @@ body:has(.about-page) .landing-topbar {
   opacity: 0;
   transform: translate(-50%, calc(-50% - 6px));
 }
-/* Circular blurred aura — sized to encompass the text, lifts the ink off
-   the moving gradient without occluding the clock hands. */
+/* Breathing aura — circular backdrop-filter lens behind the narrative.
+   Sized to wrap the longest pill row but not so big it covers the full
+   sweep of the clock hands. */
+/* Sized to wrap the (now compact) narrative + pills with a small margin.
+   The hand sweeps extend past the aura at near-vertical angles into the
+   open canvas above and below. */
 .landing-hero-aura {
   position: absolute;
   top: 50%; left: 50%;
-  /* Big enough that every line of the narrative — including the
-     widest BLOOM CALENDAR row — sits comfortably inside the circle
-     on both desktop and mobile portrait viewports. */
-  width: min(760px, 128vw);
-  height: min(760px, 128vw);
+  width: min(454px, 119vw);
+  height: min(454px, 119vw);
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.06);
@@ -641,7 +642,7 @@ body:has(.about-page) .landing-topbar {
 /* ── Landing — desktop scaling ── */
 @media (min-width: 900px) {
   .landing-hero-narrative {
-    max-width: 720px;
+    max-width: 540px;
     padding: 0 32px;
   }
   .landing-hero-prose {
@@ -660,8 +661,8 @@ body:has(.about-page) .landing-topbar {
     margin-bottom: 32px;
   }
   .landing-hero-aura {
-    width: min(755px, 56vw);
-    height: min(755px, 56vw);
+    width: min(700px, 52vw);
+    height: min(700px, 52vw);
   }
 }
 /* Inline gateway — Space Mono bold uppercase capsule, wrapped between the

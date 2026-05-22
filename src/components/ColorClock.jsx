@@ -205,13 +205,22 @@ export default function ColorClock({ className, style }) {
       // Floor at 0.42 × min(W,H) so we never produce a dot — even when the
       // visible width is very narrow, the hand still reaches a sensible
       // length toward the tip glow.
+      // On landscape/desktop the visible-half clamps were keeping the hand
+      // short because the 16:9 canvas matches the viewport on landscape —
+      // so visHalfH ≈ H/2 = 450 was the binding limit no matter what the
+      // 0.66/0.80/0.88 cap said. Drop those clamps on landscape so the
+      // cap actually controls hand length; keep them on portrait to make
+      // sure the tip never gets cropped off the sides of a phone.
+      const isLandscape = cw > 0 && cw >= ch;
       const handMax = Math.max(
         Math.min(W, H) * 0.42,
-        Math.min(
-          Math.min(W, H) * 0.66,
-          visHalfW * 0.94,
-          visHalfH * 0.94
-        )
+        isLandscape
+          ? Math.min(W, H) * 0.58
+          : Math.min(
+              Math.min(W, H) * 0.58,
+              visHalfW * 0.94,
+              visHalfH * 0.94
+            )
       );
       const hx = cx + Math.cos(handAngle) * handMax;
       const hy = cy + Math.sin(handAngle) * handMax;
@@ -229,8 +238,10 @@ export default function ColorClock({ className, style }) {
 
       // Minute hand — thinner, but same dual treatment (dark core + faint halo)
       const minAngle = mAngle(prog * 12 * 12);
-      const mx2 = cx + Math.cos(minAngle) * (handMax * 0.92);
-      const my2 = cy + Math.sin(minAngle) * (handMax * 0.92);
+      // Mobile portrait gets a slightly longer minute-hand tail
+      const minMul = isLandscape ? 0.78 : 0.82;
+      const mx2 = cx + Math.cos(minAngle) * (handMax * minMul);
+      const my2 = cy + Math.sin(minAngle) * (handMax * minMul);
       ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(mx2, my2);
       ctx.strokeStyle = rgba(lc, 0.50); ctx.lineWidth = 4.5; ctx.lineCap = 'round'; ctx.stroke();
       ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(mx2, my2);
