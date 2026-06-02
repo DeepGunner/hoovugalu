@@ -326,12 +326,8 @@ void main(){
     let ambience = null;
     let currentSeason = null;
     const SCALES = {
-      // Lower-register scales for spring (Mar–Apr) and monsoon (May–Aug):
-      // the high notes (A5, F#5, F5, Eb5) read as piercing on phone
-      // speakers when struck cold. Trimmed to keep just the warm middle
-      // register so the attack feels rounded instead of sharp.
-      spring: ['E3', 'F#3', 'A3', 'B3', 'C#4', 'E4', 'F#4', 'A4'],
-      monsoon: ['C3', 'Eb3', 'F3', 'G3', 'Bb3', 'C4', 'Eb4', 'F4'],
+      spring: ['E4', 'F#4', 'A4', 'B4', 'C#5', 'E5', 'F#5', 'A5'],
+      monsoon: ['C4', 'Eb4', 'F4', 'G4', 'Bb4', 'C5', 'Eb5', 'F5'],
       autumn: ['D4', 'F4', 'G4', 'A4', 'C5', 'D5', 'F5'],
       winter: ['C4', 'D4', 'F4', 'G4', 'A4', 'C5', 'D5'],
     };
