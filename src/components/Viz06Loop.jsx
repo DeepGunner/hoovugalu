@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as Tone from 'tone';
-import { installAudioUnlock } from '../data/audioUnlock.js';
 import { SP } from '../data/bloom.js';
 import { sceneImageUrl } from '../data/scene-image.js';
 
@@ -509,9 +508,6 @@ export default function Viz06Loop({ isActive = true }) {
 
     let v6Ready = false, v6Synth = null, v6Drone = null, v6Rev = null;
     let v6Season = null;
-    // Aggressive audio unlock for in-app webviews (LinkedIn, Instagram, etc.)
-    installAudioUnlock(Tone);
-
     async function ensureV6Audio() {
       if (v6Ready) return;
       try {

@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import * as Tone from 'tone';
-import { installAudioUnlock } from '../data/audioUnlock.js';
 import { SP, M_LONG, hexRgb } from '../data/bloom.js';
 import { createAmbience } from '../data/ambience.js';
 
@@ -348,21 +347,15 @@ void main(){
       if (m >= 9 && m <= 10) return 'autumn';
       return 'winter';
     }
-    // Aggressive audio unlock for in-app webviews (LinkedIn, Instagram, etc.)
-    installAudioUnlock(Tone);
-
     async function initAudio() {
       if (audioReady) return;
       await Tone.start();
       reverb = new Tone.Reverb({ decay: 9, wet: 0.84 }).toDestination();
       const dly = new Tone.FeedbackDelay('8n.', 0.20).connect(reverb);
-      // Gentle attack (avoids the sharp on-strike of the original 0.5)
-      // but quick enough to register; volume restored so notes are
-      // audible on phone speakers.
       blossomSynth = new Tone.PolySynth(Tone.Synth, {
         oscillator: { type: 'sine' },
-        envelope: { attack: 0.8, decay: 2.2, sustain: 0.14, release: 5 },
-        volume: -10,
+        envelope: { attack: 0.5, decay: 2.0, sustain: 0.12, release: 5 },
+        volume: -13,
       }).connect(dly);
       droneSynth = new Tone.PolySynth(Tone.Synth, {
         oscillator: { type: 'fatsine', count: 3, spread: 12 },
@@ -376,29 +369,18 @@ void main(){
     function startSoundscape(hlM) {
       if (!audioReady) return;
       const season = getSeason(hlM);
-      const scale = SCALES[season];
-      // Fire an IMMEDIATE confirmation note so the user hears sound on the
-      // first click instead of waiting 5+ seconds for the probabilistic
-      // loop to roll a hit. This also acts as the audible "unlock test"
-      // that proves the audio context is producing output.
-      try {
-        const now = Tone.now();
-        const lead = scale[Math.floor(scale.length / 2)];
-        blossomSynth.triggerAttackRelease(lead, '4n', now + 0.02);
-      } catch (e) { /* ignore */ }
       if (season !== currentSeason) {
-        droneSynth.releaseAll(Tone.now() + 1.0);
-        const t = Tone.now() + 0.2; // start drone almost immediately (was +2s)
+        droneSynth.releaseAll(Tone.now() + 1.5);
+        const t = Tone.now() + 2;
         DRONE[season].forEach((n) => droneSynth.triggerAttack(n, t));
         currentSeason = season;
       }
       if (soundLoop) { soundLoop.dispose(); Tone.Transport.stop(); }
+      const scale = SCALES[season];
       soundLoop = new Tone.Loop((time) => {
         SP.forEach((sp) => {
           if (sp.id === 'SLV') return;
-          // Probability bumped 0.26 → 0.45 so notes play noticeably more
-          // often — the previous rate left long stretches of silence.
-          const prob = (sp.bloom[hlM] / 100) * 0.45;
+          const prob = (sp.bloom[hlM] / 100) * 0.26;
           if (Math.random() < prob) {
             const note = scale[Math.floor(Math.random() * scale.length)];
             blossomSynth.triggerAttackRelease(note, '4n', time + Math.random() * 1.6);
