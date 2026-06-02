@@ -410,6 +410,15 @@ void main(){
     function adoptGestureContext() {
       if (contextAdopted) return;
       contextAdopted = true;
+      // THE iOS FIX: declare the audio as primary "playback" media. By
+      // default WebKit treats Web Audio as ambient and SILENCES it behind
+      // the ring/silent switch (while letting <video>/<audio> like YouTube
+      // play through) — which is exactly why nothing was audible on iPhone
+      // even though desktop worked. Setting this makes Web Audio play
+      // through the silent switch at full volume. (iOS Safari 16.4+.)
+      try {
+        if (navigator.audioSession) navigator.audioSession.type = 'playback';
+      } catch (e) { /* ignore */ }
       try {
         const AC = window.AudioContext || window.webkitAudioContext;
         if (!AC) return;

@@ -515,6 +515,11 @@ export default function Viz06Loop({ isActive = true }) {
     function v6AdoptGestureContext() {
       if (v6CtxAdopted) return;
       v6CtxAdopted = true;
+      // iOS: route Web Audio as primary "playback" media so it plays
+      // through the silent switch (see Viz01Soundscape for full rationale).
+      try {
+        if (navigator.audioSession) navigator.audioSession.type = 'playback';
+      } catch (e) { /* ignore */ }
       try {
         const AC = window.AudioContext || window.webkitAudioContext;
         if (!AC) return;
