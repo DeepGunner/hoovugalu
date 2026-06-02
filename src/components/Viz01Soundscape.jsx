@@ -419,25 +419,26 @@ void main(){
       try {
         if (navigator.audioSession) navigator.audioSession.type = 'playback';
       } catch (e) { /* ignore */ }
+      // Resume + kick Tone's EXISTING context inside the gesture. We do NOT
+      // create a new context / call Tone.setContext — doing so leaves the
+      // Tone.Transport clock bound to the old context, which silences every
+      // Transport/Loop-scheduled sound (blossom colour notes + bird song)
+      // while only the immediate Noise sources (wind/rain) keep playing.
       try {
-        const AC = window.AudioContext || window.webkitAudioContext;
-        if (!AC) return;
-        const fresh = new AC();
-        // A 1-sample silent buffer played through the fresh context wakes
-        // the hardware output on locked-down webviews.
-        try {
-          const buf = fresh.createBuffer(1, 1, fresh.sampleRate || 44100);
-          const src = fresh.createBufferSource();
-          src.buffer = buf;
-          src.connect(fresh.destination);
-          src.start(0);
-        } catch (e) { /* ignore */ }
-        if (fresh.state === 'suspended' && fresh.resume) {
-          try { fresh.resume(); } catch (e) {}
+        const tCtx = Tone.getContext();
+        const raw = tCtx.rawContext || tCtx._context || tCtx;
+        if (raw) {
+          if (raw.state === 'suspended' && raw.resume) {
+            try { raw.resume(); } catch (e) {}
+          }
+          try {
+            const buf = raw.createBuffer(1, 1, raw.sampleRate || 44100);
+            const src = raw.createBufferSource();
+            src.buffer = buf;
+            src.connect(raw.destination);
+            src.start(0);
+          } catch (e) { /* ignore */ }
         }
-        // Hand the gesture-born context to Tone BEFORE initAudio() builds
-        // the synths/reverb, so the whole graph lives on the live context.
-        Tone.setContext(fresh);
       } catch (e) { /* ignore */ }
     }
 

@@ -517,24 +517,26 @@ export default function Viz06Loop({ isActive = true }) {
       v6CtxAdopted = true;
       // iOS: route Web Audio as primary "playback" media so it plays
       // through the silent switch (see Viz01Soundscape for full rationale).
+      // Resume Tone's OWN context — never swap it, or Transport-scheduled
+      // notes go silent.
       try {
         if (navigator.audioSession) navigator.audioSession.type = 'playback';
       } catch (e) { /* ignore */ }
       try {
-        const AC = window.AudioContext || window.webkitAudioContext;
-        if (!AC) return;
-        const fresh = new AC();
-        try {
-          const buf = fresh.createBuffer(1, 1, fresh.sampleRate || 44100);
-          const src = fresh.createBufferSource();
-          src.buffer = buf;
-          src.connect(fresh.destination);
-          src.start(0);
-        } catch (e) { /* ignore */ }
-        if (fresh.state === 'suspended' && fresh.resume) {
-          try { fresh.resume(); } catch (e) {}
+        const tCtx = Tone.getContext();
+        const raw = tCtx.rawContext || tCtx._context || tCtx;
+        if (raw) {
+          if (raw.state === 'suspended' && raw.resume) {
+            try { raw.resume(); } catch (e) {}
+          }
+          try {
+            const buf = raw.createBuffer(1, 1, raw.sampleRate || 44100);
+            const src = raw.createBufferSource();
+            src.buffer = buf;
+            src.connect(raw.destination);
+            src.start(0);
+          } catch (e) { /* ignore */ }
         }
-        Tone.setContext(fresh);
       } catch (e) { /* ignore */ }
     }
     async function ensureV6Audio() {
