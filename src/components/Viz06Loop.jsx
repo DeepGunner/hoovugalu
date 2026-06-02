@@ -619,13 +619,25 @@ export default function Viz06Loop({ isActive = true }) {
     canvas.addEventListener('mouseleave', onHudLeave);
 
     function onCellClick(e) {
+      // SYNCHRONOUS UNLOCK — must run inside the gesture before any await.
+      try {
+        const tCtx = Tone.getContext();
+        const raw = tCtx.rawContext || tCtx._context || tCtx;
+        if (raw) {
+          if (raw.state === 'suspended' && raw.resume) {
+            try { raw.resume(); } catch (err) {}
+          }
+          const buf = raw.createBuffer(1, 1, raw.sampleRate || 44100);
+          const src = raw.createBufferSource();
+          src.buffer = buf;
+          src.connect(raw.destination);
+          src.start(0);
+        }
+      } catch (err) { /* ignore */ }
       const rect = canvas.getBoundingClientRect();
       const rx = e.clientX - rect.left, ry = e.clientY - rect.top;
       const mi = Math.min(11, Math.max(0, Math.floor((rx / rect.width) * 12)));
       const yi = Math.min(YSPAN - 1, Math.max(0, Math.round((ry / rect.height) * (YSPAN - 1))));
-      // First click acts as the user gesture that unlocks Web Audio so the
-      // subsequent hover notes can play (browsers block AudioContext.start
-      // until a real input event).
       ensureV6Audio().then(() => playCell(1908 + yi, mi));
       // Same pixel re-click → keep showing the same card, no change
       if (yi === lastCellRef.current.yi && mi === lastCellRef.current.mi) return;

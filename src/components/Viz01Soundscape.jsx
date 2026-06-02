@@ -398,46 +398,47 @@ void main(){
       playBtn.classList.toggle('is-playing', playing);
       playBtn.setAttribute('aria-label', playing ? 'Pause music' : 'Play music');
     }
-    // Diagnostic: play a short beep through TONE'S existing AudioContext
-    // (not a new one). On mobile, only the first AudioContext per page
-    // load gets unlocked by a user gesture — Tone's is already that one
-    // since Tone created its context at import time. We must reuse it
-    // and explicitly resume.
-    async function playDiagnosticBeep() {
+    // Synchronous audio unlock — MUST run inside the user gesture's
+    // synchronous execution (no awaits before this). On mobile webkit
+    // the gesture token is consumed by the first await, so all unlock
+    // operations have to happen first.
+    function unlockAudioSynchronously() {
       try {
         const tCtx = Tone.getContext();
         const raw = tCtx.rawContext || tCtx._context || tCtx;
-        // Explicit resume — required on mobile webkit even after user
-        // gesture in some Chrome builds.
+        if (!raw) return;
+        // Fire-and-forget resume — don't await, the act of calling is
+        // what claims the unlock during the gesture.
         if (raw.state === 'suspended' && raw.resume) {
-          await raw.resume();
+          try { raw.resume(); } catch (e) {}
         }
-        // Also call Tone.start() which is idempotent and handles iOS
-        // unlock nuances.
-        try { await Tone.start(); } catch (e) {}
-        const osc = raw.createOscillator();
-        const gain = raw.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = 660;
-        const t0 = raw.currentTime;
-        gain.gain.setValueAtTime(0, t0);
-        gain.gain.linearRampToValueAtTime(0.22, t0 + 0.02);
-        gain.gain.linearRampToValueAtTime(0, t0 + 0.45);
-        osc.connect(gain).connect(raw.destination);
-        osc.start(t0);
-        osc.stop(t0 + 0.5);
+        // Play a 1-sample silent buffer through the destination. This
+        // actually starts output on the audio session in webview
+        // contexts where resume() alone isn't enough.
+        const buf = raw.createBuffer(1, 1, raw.sampleRate || 44100);
+        const src = raw.createBufferSource();
+        src.buffer = buf;
+        src.connect(raw.destination);
+        src.start(0);
       } catch (e) { /* ignore */ }
     }
 
-    async function togglePlay() {
+    // NOT async — the click handler itself returns synchronously so the
+    // browser sees the gesture as fully resolved while we kick off audio
+    // work in the background.
+    function togglePlay() {
+      // STEP 1: synchronous unlock inside the gesture (before any await)
+      unlockAudioSynchronously();
+      // STEP 2: schedule the async init work after the unlock
       if (!firstTouch) {
         firstTouch = true;
-        // Synchronous-ish: kick off the beep through Tone's context, then
-        // proceed with full init. The beep itself awaits its own resume.
-        playDiagnosticBeep();
-        await initAudio();
-        startSoundscape(activeM);
-        setPlayState(true);
+        (async () => {
+          try {
+            await initAudio();
+            startSoundscape(activeM);
+            setPlayState(true);
+          } catch (e) { /* ignore */ }
+        })();
         return;
       }
       if (isPlaying) {
