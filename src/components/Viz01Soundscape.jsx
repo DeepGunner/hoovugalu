@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as Tone from 'tone';
-import { installAudioUnlock, kickAudio } from '../data/audioUnlock.js';
+import { installAudioUnlock } from '../data/audioUnlock.js';
 import { SP, M_LONG, hexRgb } from '../data/bloom.js';
 import { createAmbience } from '../data/ambience.js';
 
@@ -421,9 +421,6 @@ void main(){
       playBtn.setAttribute('aria-label', playing ? 'Pause music' : 'Play music');
     }
     async function togglePlay() {
-      // Synchronous kick INSIDE the click handler — webviews unlock when
-      // the gesture itself initiates audio output, not async-later.
-      kickAudio(Tone);
       if (!firstTouch) {
         firstTouch = true;
         await initAudio();
