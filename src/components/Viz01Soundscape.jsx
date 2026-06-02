@@ -376,18 +376,29 @@ void main(){
     function startSoundscape(hlM) {
       if (!audioReady) return;
       const season = getSeason(hlM);
+      const scale = SCALES[season];
+      // Fire an IMMEDIATE confirmation note so the user hears sound on the
+      // first click instead of waiting 5+ seconds for the probabilistic
+      // loop to roll a hit. This also acts as the audible "unlock test"
+      // that proves the audio context is producing output.
+      try {
+        const now = Tone.now();
+        const lead = scale[Math.floor(scale.length / 2)];
+        blossomSynth.triggerAttackRelease(lead, '4n', now + 0.02);
+      } catch (e) { /* ignore */ }
       if (season !== currentSeason) {
-        droneSynth.releaseAll(Tone.now() + 1.5);
-        const t = Tone.now() + 2;
+        droneSynth.releaseAll(Tone.now() + 1.0);
+        const t = Tone.now() + 0.2; // start drone almost immediately (was +2s)
         DRONE[season].forEach((n) => droneSynth.triggerAttack(n, t));
         currentSeason = season;
       }
       if (soundLoop) { soundLoop.dispose(); Tone.Transport.stop(); }
-      const scale = SCALES[season];
       soundLoop = new Tone.Loop((time) => {
         SP.forEach((sp) => {
           if (sp.id === 'SLV') return;
-          const prob = (sp.bloom[hlM] / 100) * 0.26;
+          // Probability bumped 0.26 → 0.45 so notes play noticeably more
+          // often — the previous rate left long stretches of silence.
+          const prob = (sp.bloom[hlM] / 100) * 0.45;
           if (Math.random() < prob) {
             const note = scale[Math.floor(Math.random() * scale.length)];
             blossomSynth.triggerAttackRelease(note, '4n', time + Math.random() * 1.6);
