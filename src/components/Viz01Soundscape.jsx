@@ -398,31 +398,42 @@ void main(){
       playBtn.classList.toggle('is-playing', playing);
       playBtn.setAttribute('aria-label', playing ? 'Pause music' : 'Play music');
     }
-    // Diagnostic: play a short raw-Web-Audio beep on first Play tap. If
-    // mobile users hear THIS but not the Tone.js soundscape, the bug is
-    // somewhere in how Tone routes through the AudioContext on minified
-    // production builds. If they hear neither, it's device-level.
-    function playDiagnosticBeep() {
+    // Diagnostic: play a short beep through TONE'S existing AudioContext
+    // (not a new one). On mobile, only the first AudioContext per page
+    // load gets unlocked by a user gesture — Tone's is already that one
+    // since Tone created its context at import time. We must reuse it
+    // and explicitly resume.
+    async function playDiagnosticBeep() {
       try {
-        const Ctx = window.AudioContext || window.webkitAudioContext;
-        const ctx = new Ctx();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
+        const tCtx = Tone.getContext();
+        const raw = tCtx.rawContext || tCtx._context || tCtx;
+        // Explicit resume — required on mobile webkit even after user
+        // gesture in some Chrome builds.
+        if (raw.state === 'suspended' && raw.resume) {
+          await raw.resume();
+        }
+        // Also call Tone.start() which is idempotent and handles iOS
+        // unlock nuances.
+        try { await Tone.start(); } catch (e) {}
+        const osc = raw.createOscillator();
+        const gain = raw.createGain();
         osc.type = 'sine';
-        osc.frequency.value = 660; // E5 — solidly in phone-speaker range
-        gain.gain.setValueAtTime(0, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 0.02);
-        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.45);
-        osc.connect(gain).connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.5);
-        setTimeout(() => { try { ctx.close(); } catch (e) {} }, 800);
+        osc.frequency.value = 660;
+        const t0 = raw.currentTime;
+        gain.gain.setValueAtTime(0, t0);
+        gain.gain.linearRampToValueAtTime(0.22, t0 + 0.02);
+        gain.gain.linearRampToValueAtTime(0, t0 + 0.45);
+        osc.connect(gain).connect(raw.destination);
+        osc.start(t0);
+        osc.stop(t0 + 0.5);
       } catch (e) { /* ignore */ }
     }
 
     async function togglePlay() {
       if (!firstTouch) {
         firstTouch = true;
+        // Synchronous-ish: kick off the beep through Tone's context, then
+        // proceed with full init. The beep itself awaits its own resume.
         playDiagnosticBeep();
         await initAudio();
         startSoundscape(activeM);
