@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as Tone from 'tone';
-import { installAudioUnlock } from '../data/audioUnlock.js';
+import { installAudioUnlock, kickAudio } from '../data/audioUnlock.js';
 import { SP } from '../data/bloom.js';
 import { sceneImageUrl } from '../data/scene-image.js';
 
@@ -623,6 +623,9 @@ export default function Viz06Loop({ isActive = true }) {
     canvas.addEventListener('mouseleave', onHudLeave);
 
     function onCellClick(e) {
+      // Synchronous kick inside the click — webviews unlock when audio
+      // output starts INSIDE the gesture itself.
+      kickAudio(Tone);
       const rect = canvas.getBoundingClientRect();
       const rx = e.clientX - rect.left, ry = e.clientY - rect.top;
       const mi = Math.min(11, Math.max(0, Math.floor((rx / rect.width) * 12)));

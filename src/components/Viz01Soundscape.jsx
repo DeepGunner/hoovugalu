@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as Tone from 'tone';
-import { installAudioUnlock } from '../data/audioUnlock.js';
+import { installAudioUnlock, kickAudio } from '../data/audioUnlock.js';
 import { SP, M_LONG, hexRgb } from '../data/bloom.js';
 import { createAmbience } from '../data/ambience.js';
 
@@ -356,12 +356,13 @@ void main(){
       await Tone.start();
       reverb = new Tone.Reverb({ decay: 9, wet: 0.84 }).toDestination();
       const dly = new Tone.FeedbackDelay('8n.', 0.20).connect(reverb);
-      // Softer attack (0.5 → 1.4) so notes fade in like petals instead of
-      // striking on, with a touch quieter overall volume.
+      // Gentle attack (avoids the sharp on-strike of the original 0.5)
+      // but quick enough to register; volume restored so notes are
+      // audible on phone speakers.
       blossomSynth = new Tone.PolySynth(Tone.Synth, {
         oscillator: { type: 'sine' },
-        envelope: { attack: 1.4, decay: 2.4, sustain: 0.10, release: 6 },
-        volume: -16,
+        envelope: { attack: 0.8, decay: 2.2, sustain: 0.14, release: 5 },
+        volume: -10,
       }).connect(dly);
       droneSynth = new Tone.PolySynth(Tone.Synth, {
         oscillator: { type: 'fatsine', count: 3, spread: 12 },
@@ -409,6 +410,9 @@ void main(){
       playBtn.setAttribute('aria-label', playing ? 'Pause music' : 'Play music');
     }
     async function togglePlay() {
+      // Synchronous kick INSIDE the click handler — webviews unlock when
+      // the gesture itself initiates audio output, not async-later.
+      kickAudio(Tone);
       if (!firstTouch) {
         firstTouch = true;
         await initAudio();

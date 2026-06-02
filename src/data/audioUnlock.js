@@ -1,22 +1,22 @@
 /**
  * Aggressive audio unlock for mobile in-app webviews (LinkedIn, Instagram,
- * Facebook, Twitter, Threads, etc.). These embedded browsers often leave
- * the WebAudio AudioContext stuck in "suspended" state even after a user
- * gesture. The tricks that survive across them:
+ * Facebook, Twitter/X, Threads, etc.) and stock browsers.
  *
- *  1. Silently play an inline <audio> element with a 1-frame WAV. The
- *     act of HTMLAudio playing claims the device audio session, which
- *     in many webviews also unblocks Tone.js's AudioContext.
- *  2. Call Tone.start() AND ctx.resume() — separately, both can be needed.
- *  3. Re-fire on EVERY user gesture, not just the first, because some
- *     webviews re-suspend the context when the page is briefly hidden.
- *
- * This module exposes installAudioUnlock(toneModule) which wires the
- * unlock to global pointer/touch listeners and is safe to call multiple
- * times (idempotent).
+ * Strategy:
+ *  1. On EVERY user gesture (capture phase) call Tone.start() and resume
+ *     the raw AudioContext if it's suspended. Many webviews re-suspend
+ *     the context after focus changes, so once isn't enough.
+ *  2. Play a one-sample silent buffer through Tone's destination — the
+ *     act of any buffer source actually playing claims the audio output
+ *     channel, which unblocks Tone's master output in webviews where
+ *     start()/resume() alone fail.
+ *  3. Run a silent HTMLAudioElement in parallel — different webviews
+ *     respond to one or the other.
+ *  4. Re-fire on visibilitychange (returning to the tab from a brief
+ *     background) because that re-suspends the context in many webviews.
  */
 
-// 1-frame PCM WAV, base64 — silent, fully decodable on every browser.
+// 1-frame PCM WAV — silent, fully decodable everywhere.
 const SILENT_WAV =
   'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
 
@@ -24,40 +24,52 @@ let installed = false;
 let silentAudio = null;
 
 function ensureSilentAudio() {
-  if (silentAudio) return silentAudio;
+  if (silentAudio || typeof document === 'undefined') return silentAudio;
   silentAudio = document.createElement('audio');
   silentAudio.src = SILENT_WAV;
   silentAudio.loop = true;
   silentAudio.volume = 0;
-  silentAudio.muted = false; // muted:true defeats the purpose in some webviews
+  silentAudio.muted = false;
   silentAudio.setAttribute('playsinline', '');
   silentAudio.setAttribute('webkit-playsinline', '');
+  silentAudio.setAttribute('autoplay', '');
   silentAudio.preload = 'auto';
+  // Don't insert into DOM — keep it lightweight.
   return silentAudio;
 }
 
+function safe(fn) {
+  try {
+    const p = fn();
+    if (p && typeof p.then === 'function') p.catch(() => {});
+  } catch (e) { /* ignore */ }
+}
+
 function tryResume(Tone) {
-  // Best-effort unlock: silent <audio> + Tone.start + ctx.resume.
-  try {
+  safe(() => {
     const a = ensureSilentAudio();
-    // Re-trigger play on every gesture in case the webview paused it.
-    const p = a.play();
-    if (p && typeof p.then === 'function') p.catch(() => { /* ignore */ });
-  } catch (e) { /* ignore */ }
-  try {
-    if (Tone && typeof Tone.start === 'function') {
-      const p = Tone.start();
-      if (p && typeof p.then === 'function') p.catch(() => { /* ignore */ });
-    }
-  } catch (e) { /* ignore */ }
-  try {
+    if (a) return a.play();
+  });
+  safe(() => (Tone && Tone.start ? Tone.start() : null));
+  safe(() => {
     const ctx = Tone && Tone.getContext ? Tone.getContext() : null;
     const raw = ctx && (ctx.rawContext || ctx._context || ctx);
-    if (raw && raw.state === 'suspended' && typeof raw.resume === 'function') {
-      const p = raw.resume();
-      if (p && typeof p.then === 'function') p.catch(() => { /* ignore */ });
-    }
-  } catch (e) { /* ignore */ }
+    if (raw && raw.state === 'suspended' && raw.resume) return raw.resume();
+  });
+  // Play a one-sample silent buffer through Tone's destination. The
+  // act of a buffer source actually starting frequently unblocks the
+  // master output in webviews where ctx.resume() alone is silently
+  // rejected.
+  safe(() => {
+    const ctx = Tone && Tone.getContext ? Tone.getContext() : null;
+    const raw = ctx && (ctx.rawContext || ctx._context);
+    if (!raw || !raw.createBuffer || !raw.createBufferSource) return;
+    const buffer = raw.createBuffer(1, 1, 22050);
+    const source = raw.createBufferSource();
+    source.buffer = buffer;
+    source.connect(raw.destination);
+    if (source.start) source.start(0);
+  });
 }
 
 export function installAudioUnlock(Tone) {
@@ -68,9 +80,14 @@ export function installAudioUnlock(Tone) {
   events.forEach((ev) => {
     window.addEventListener(ev, handler, { capture: true, passive: true });
   });
-  // Also resume whenever the tab becomes visible again — in-app webviews
-  // often suspend the context when the user backgrounds the app briefly.
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') tryResume(Tone);
   });
+}
+
+// Imperative kick — called from inside the Play-button click handler so
+// the unlock fires synchronously with the actual user gesture (not just
+// the global listener), which is what some hardened webviews require.
+export function kickAudio(Tone) {
+  tryResume(Tone);
 }
