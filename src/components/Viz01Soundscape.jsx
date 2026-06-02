@@ -398,28 +398,37 @@ void main(){
       playBtn.classList.toggle('is-playing', playing);
       playBtn.setAttribute('aria-label', playing ? 'Pause music' : 'Play music');
     }
-    // Synchronous audio unlock — MUST run inside the user gesture's
-    // synchronous execution (no awaits before this). On mobile webkit
-    // the gesture token is consumed by the first await, so all unlock
-    // operations have to happen first.
-    function unlockAudioSynchronously() {
+    // First-gesture audio unlock. On iOS Safari / Chrome and WKWebView
+    // (LinkedIn in-app), the AudioContext Tone creates at import time —
+    // before any user gesture exists — can stay permanently SILENT even
+    // when its state reads "running" and resume() succeeds. The only
+    // reliable cure is to build a brand-new AudioContext *inside* the
+    // gesture and hand it to Tone before it wires up any nodes. This must
+    // run synchronously (no awaits before it) so the gesture token is
+    // still valid.
+    let contextAdopted = false;
+    function adoptGestureContext() {
+      if (contextAdopted) return;
+      contextAdopted = true;
       try {
-        const tCtx = Tone.getContext();
-        const raw = tCtx.rawContext || tCtx._context || tCtx;
-        if (!raw) return;
-        // Fire-and-forget resume — don't await, the act of calling is
-        // what claims the unlock during the gesture.
-        if (raw.state === 'suspended' && raw.resume) {
-          try { raw.resume(); } catch (e) {}
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        const fresh = new AC();
+        // A 1-sample silent buffer played through the fresh context wakes
+        // the hardware output on locked-down webviews.
+        try {
+          const buf = fresh.createBuffer(1, 1, fresh.sampleRate || 44100);
+          const src = fresh.createBufferSource();
+          src.buffer = buf;
+          src.connect(fresh.destination);
+          src.start(0);
+        } catch (e) { /* ignore */ }
+        if (fresh.state === 'suspended' && fresh.resume) {
+          try { fresh.resume(); } catch (e) {}
         }
-        // Play a 1-sample silent buffer through the destination. This
-        // actually starts output on the audio session in webview
-        // contexts where resume() alone isn't enough.
-        const buf = raw.createBuffer(1, 1, raw.sampleRate || 44100);
-        const src = raw.createBufferSource();
-        src.buffer = buf;
-        src.connect(raw.destination);
-        src.start(0);
+        // Hand the gesture-born context to Tone BEFORE initAudio() builds
+        // the synths/reverb, so the whole graph lives on the live context.
+        Tone.setContext(fresh);
       } catch (e) { /* ignore */ }
     }
 
@@ -427,8 +436,8 @@ void main(){
     // browser sees the gesture as fully resolved while we kick off audio
     // work in the background.
     function togglePlay() {
-      // STEP 1: synchronous unlock inside the gesture (before any await)
-      unlockAudioSynchronously();
+      // STEP 1: synchronous in-gesture context adoption (before any await)
+      adoptGestureContext();
       // STEP 2: schedule the async init work after the unlock
       if (!firstTouch) {
         firstTouch = true;
@@ -476,7 +485,12 @@ void main(){
     tickEls.forEach((el, i) => {
       const h = async () => {
         sl.value = i;
-        if (!firstTouch) { firstTouch = true; await initAudio(); setPlayState(true); }
+        if (!firstTouch) {
+          firstTouch = true;
+          adoptGestureContext();
+          await initAudio();
+          setPlayState(true);
+        }
         update(i);
       };
       el.addEventListener('click', h);

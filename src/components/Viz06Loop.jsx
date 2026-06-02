@@ -508,6 +508,30 @@ export default function Viz06Loop({ isActive = true }) {
 
     let v6Ready = false, v6Synth = null, v6Drone = null, v6Rev = null;
     let v6Season = null;
+    // First-gesture context adoption — see Viz01Soundscape for the full
+    // rationale. iOS / WKWebView keep the import-time AudioContext silent;
+    // a fresh context built inside the gesture and handed to Tone fixes it.
+    let v6CtxAdopted = false;
+    function v6AdoptGestureContext() {
+      if (v6CtxAdopted) return;
+      v6CtxAdopted = true;
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        const fresh = new AC();
+        try {
+          const buf = fresh.createBuffer(1, 1, fresh.sampleRate || 44100);
+          const src = fresh.createBufferSource();
+          src.buffer = buf;
+          src.connect(fresh.destination);
+          src.start(0);
+        } catch (e) { /* ignore */ }
+        if (fresh.state === 'suspended' && fresh.resume) {
+          try { fresh.resume(); } catch (e) {}
+        }
+        Tone.setContext(fresh);
+      } catch (e) { /* ignore */ }
+    }
     async function ensureV6Audio() {
       if (v6Ready) return;
       try {
@@ -619,21 +643,8 @@ export default function Viz06Loop({ isActive = true }) {
     canvas.addEventListener('mouseleave', onHudLeave);
 
     function onCellClick(e) {
-      // SYNCHRONOUS UNLOCK — must run inside the gesture before any await.
-      try {
-        const tCtx = Tone.getContext();
-        const raw = tCtx.rawContext || tCtx._context || tCtx;
-        if (raw) {
-          if (raw.state === 'suspended' && raw.resume) {
-            try { raw.resume(); } catch (err) {}
-          }
-          const buf = raw.createBuffer(1, 1, raw.sampleRate || 44100);
-          const src = raw.createBufferSource();
-          src.buffer = buf;
-          src.connect(raw.destination);
-          src.start(0);
-        }
-      } catch (err) { /* ignore */ }
+      // SYNCHRONOUS in-gesture context adoption — before any await.
+      v6AdoptGestureContext();
       const rect = canvas.getBoundingClientRect();
       const rx = e.clientX - rect.left, ry = e.clientY - rect.top;
       const mi = Math.min(11, Math.max(0, Math.floor((rx / rect.width) * 12)));
