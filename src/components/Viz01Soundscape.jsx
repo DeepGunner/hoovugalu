@@ -398,9 +398,32 @@ void main(){
       playBtn.classList.toggle('is-playing', playing);
       playBtn.setAttribute('aria-label', playing ? 'Pause music' : 'Play music');
     }
+    // Diagnostic: play a short raw-Web-Audio beep on first Play tap. If
+    // mobile users hear THIS but not the Tone.js soundscape, the bug is
+    // somewhere in how Tone routes through the AudioContext on minified
+    // production builds. If they hear neither, it's device-level.
+    function playDiagnosticBeep() {
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new Ctx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 660; // E5 — solidly in phone-speaker range
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 0.02);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.45);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.5);
+        setTimeout(() => { try { ctx.close(); } catch (e) {} }, 800);
+      } catch (e) { /* ignore */ }
+    }
+
     async function togglePlay() {
       if (!firstTouch) {
         firstTouch = true;
+        playDiagnosticBeep();
         await initAudio();
         startSoundscape(activeM);
         setPlayState(true);
